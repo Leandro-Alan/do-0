@@ -920,6 +920,33 @@ body {
   }
 }
 
+/* Barbers Vale no deck em tela BAIXA (notebook). Aqui o capitulo tem
+   exatamente uma tela e o contador, que vem por ultimo, ficava abaixo dela:
+   medido a 1915x857, o contador terminava em 870; a 1366x650, em 828. O
+   Leandro viu no notebook e nao no 27". Titulo, respiros e digitos passam a
+   ser medidos pela ALTURA; acima de 1000 de altura (a tela de 27") nada
+   disto entra. */
+@media (min-width: 1024px) and (min-height: 640px) and (max-height: 1000px) and (prefers-reduced-motion: no-preference) {
+  [data-id="barbersvale"] .palco-conteudo {
+    padding-top: clamp(3rem, 9svh, 6rem);
+    padding-bottom: clamp(0.75rem, 2svh, 1.5rem);
+    gap: clamp(0.5rem, 1.6svh, 1rem);
+  }
+
+  [data-id="barbersvale"] .titulo {
+    font-size: min(15vw, 9.5rem, 15svh);
+  }
+
+  [data-id="barbersvale"] .bv-contagem {
+    padding-top: clamp(0.5rem, 1.4svh, 1rem);
+    padding-bottom: clamp(0.75rem, 2.4svh, 1.5rem);
+  }
+
+  [data-id="barbersvale"] .bv-digito {
+    font-size: min(2.75rem, 5.2svh);
+  }
+}
+
 /* -------------------------------------------------- capitulo 02 Fortix --- */
 
 /* O angulo foi MEDIDO nas barras do proprio logo (script rodado sobre
@@ -2227,12 +2254,7 @@ body {
    isso e verdade. */
 [data-id="barbearia"] .palco-conteudo {
   padding-top: clamp(1.5rem, 4vh, 2.25rem);
-  /* No celular o selo mora no canto de baixo, e o botao caia em cima dele: o
-     Leandro viu o logo coberto pelo "Agendar horario". O pe do miolo reserva
-     a altura visivel do selo (ele sobe 80% do proprio tamanho a partir da
-     base), entao o botao termina ANTES dele e o selo aparece inteiro. No
-     desktop o bloco de 900px devolve o padding de sempre. */
-  padding-bottom: calc(var(--ba-selo) * 0.82);
+  padding-bottom: clamp(2rem, 6vh, 3.5rem);
   gap: clamp(0.75rem, 2.6vw, 1.25rem);
 }
 
@@ -2247,10 +2269,24 @@ body {
 
 /* A intro que substituiu os cartoes de endereco: mora dentro do subtitulo,
    como o texto de apoio do capitulo 03, e por isso e um <span> em bloco. */
+/* texto de apoio + selo pequeno ao lado (o selo inline so aparece no celular) */
+[data-id="barbearia"] .ba-apoio {
+  /* sai do teto de largura do subtitulo (34ch): la dentro o selo dividia a
+     linha com o texto e ele ficava com 135px, em 7 linhas, no iPhone X */
+  width: min(100vw - 2 * var(--gutter), 34rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(0.875rem, 4vw, 1.5rem);
+  margin-top: 0.875rem;
+}
+
 [data-id="barbearia"] .ba-texto {
   display: block;
   max-width: 38ch;
-  margin-top: 0.875rem;
+  /* a quebra de linha mora no texto, em lib/chapters.ts */
+  white-space: pre-line;
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: clamp(0.938rem, 3.8vw, 1.063rem);
   font-weight: 400;
   line-height: 1.5;
@@ -2509,6 +2545,37 @@ body {
     right: auto;
     bottom: calc(var(--ba-selo) * -0.26);
     left: calc(var(--ba-selo) * -0.3);
+  }
+}
+
+/* Celular: o selo sai do pe (onde o botao "Agendar horario" caia em cima dele)
+   e vai pro lado do texto de apoio, pequeno e na cor do texto. Desktop: volta
+   a ser a marca d'agua grande sangrando na borda. Um ou outro, nunca os dois. */
+[data-id="barbearia"] .ba-selo.ba-selo--inline {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  display: block;
+  flex: none;
+  width: clamp(84px, 24vw, 112px);
+  height: clamp(84px, 24vw, 112px);
+}
+
+[data-id="barbearia"] .ba-selo--inline .ba-selo-anel,
+[data-id="barbearia"] .ba-selo--inline .ba-selo-miolo {
+  background-color: color-mix(in srgb, var(--fg) 88%, transparent);
+}
+
+@media (max-width: 899px) {
+  [data-id="barbearia"] .ba-selo--marca {
+    display: none;
+  }
+}
+
+@media (min-width: 900px) {
+  [data-id="barbearia"] .ba-selo.ba-selo--inline {
+    display: none;
   }
 }
 

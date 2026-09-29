@@ -610,7 +610,8 @@ export const chapters: Capitulo[] = [
        * um dia isto mudar de ideia, e so devolver `unidades` e `horarios` aqui.
        */
       texto:
-        "Onde tudo começou, e onde ele continua. Cinco unidades em Jacareí, corte e barba com hora marcada.",
+        // a quebra de linha e pedido do Leandro: "Cinco unidades" abre linha propria
+        "Onde tudo começou, e onde ele continua.\nCinco unidades em Jacareí, corte e barba com hora marcada.",
       /**
        * EXISTE UMA FOTO SO do salao — nao e descuido, e o acervo inteiro: o
        * proprio site da barbearia registra "so existe 1 foto de ambiente".

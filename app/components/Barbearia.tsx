@@ -40,7 +40,12 @@ export default function Barbearia() {
       subtitulo={
         <>
           {conteudo.subtitulo}
-          {conteudo.texto && <span className="ba-texto">{conteudo.texto}</span>}
+          {conteudo.texto && (
+            <span className="ba-apoio">
+              <span className="ba-texto">{conteudo.texto}</span>
+              <SeloSantoVisu variante="inline" />
+            </span>
+          )}
         </>
       }
       midia={<MosaicoBarbearia fotos={fotos} />}

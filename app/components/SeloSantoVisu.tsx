@@ -22,8 +22,19 @@ import { useAoAtivar } from "./ChapterStack";
  * `useAoAtivar`, que dispara toda vez que a Barbearia vira o capitulo ativo,
  * nos dois sentidos, igual o `onEnter`/`onEnterBack` de antes.
  */
-export default function SeloSantoVisu() {
-  const raiz = useRef<HTMLDivElement>(null);
+export default function SeloSantoVisu({
+  variante = "marca",
+}: {
+  /**
+   * "marca"  = a marca d'agua grande sangrando na borda (desktop).
+   * "inline" = o selo pequeno ao lado do texto de apoio (celular). No celular
+   *            a marca d'agua caia no pe do capitulo, atras do botao, e o
+   *            Leandro pediu o selo ao lado de "Onde tudo comecou". O CSS mostra
+   *            um ou outro, nunca os dois.
+   */
+  variante?: "marca" | "inline";
+}) {
+  const raiz = useRef<HTMLSpanElement>(null);
 
   useAoAtivar("barbearia", () => {
     const anel = raiz.current?.querySelector<HTMLElement>("[data-anel]");
@@ -47,9 +58,15 @@ export default function SeloSantoVisu() {
   return (
     // `role="img"` com nome: o selo e a assinatura da casa e leitor de tela
     // precisa saber que ele esta ali. As duas peças sozinhas nao dizem nada.
-    <div className="ba-selo" ref={raiz} role="img" aria-label="Selo da Santo Visu Barbearia">
+    // <span>, nao <div>: a variante inline mora dentro do <p> do subtitulo
+    <span
+      className={`ba-selo ba-selo--${variante}`}
+      ref={raiz}
+      role="img"
+      aria-label="Selo da Santo Visu Barbearia"
+    >
       <span className="ba-selo-anel" data-anel aria-hidden="true" />
       <span className="ba-selo-miolo" aria-hidden="true" />
-    </div>
+    </span>
   );
 }

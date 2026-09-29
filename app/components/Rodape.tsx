@@ -26,7 +26,15 @@ import { DM, chapters } from "@/lib/chapters";
  */
 
 const ANO = 2026;
-const SOTALIA = "https://sotaliahub.com";
+/**
+ * A assinatura leva pro WhatsApp do Leandro, com a mensagem pronta — mesmo
+ * arranjo do site da Santo Visu, trocando o nome do site na frase. Quem clica
+ * em "feito por" viu o site e quer um igual: o caminho mais curto e a conversa.
+ * `encodeURIComponent` e nao `URLSearchParams`: o segundo troca espaco por "+".
+ */
+const SOTALIA = `https://api.whatsapp.com/send/?phone=5511957610725&text=${encodeURIComponent(
+  "Oi! Vi o site do André Alves e quero um site assim pro meu negócio."
+)}&type=phone_number&app_absent=0`;
 
 export default function Rodape() {
   const capa = chapters[0];

@@ -109,6 +109,18 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
             if (r.height === 0) continue;
             excesso = Math.max(excesso, Math.round(r.bottom - fundo));
           }
+          // e os filhos do palco que estao EM FLUXO (o slot `assinatura`: o
+          // contador do 01, por exemplo). Ele e aria-hidden — o relogio nao pode
+          // ser anunciado a cada segundo —, e o filtro de cima pulava ele.
+          for (const el of p.children) {
+            const pos = getComputedStyle(el).position;
+            // o miolo ja foi medido pelo que tem dentro; a caixa dele inclui o
+            // padding de baixo, que nao e conteudo cortado
+            if (pos === "absolute" || pos === "fixed" || el.classList.contains("palco-conteudo")) continue;
+            const r = el.getBoundingClientRect();
+            if (r.height === 0) continue;
+            excesso = Math.max(excesso, Math.round(r.bottom - fundo));
+          }
           if (excesso > 1) {
             console.warn(
               `[deck] ${s.dataset.id} passa da tela em ${excesso}px (${window.innerWidth}x${window.innerHeight})`
