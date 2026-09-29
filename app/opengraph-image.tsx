@@ -40,13 +40,13 @@ export default async function Imagem() {
   const frentes = chapters.slice(1);
 
   const foto = readFileSync(
-    join(process.cwd(), "assets-originais/og/andre-og.png")
+    join(process.cwd(), "recursos/og/andre-og.png")
   ).toString("base64");
   const archivo800 = readFileSync(
-    join(process.cwd(), "assets-originais/fontes/archivo-800.ttf")
+    join(process.cwd(), "recursos/fontes/archivo-800.ttf")
   );
   const archivo600 = readFileSync(
-    join(process.cwd(), "assets-originais/fontes/archivo-600.ttf")
+    join(process.cwd(), "recursos/fontes/archivo-600.ttf")
   );
 
   return new ImageResponse(

@@ -1,6 +1,7 @@
 import Chapter from "./Chapter";
 import Cta from "./Cta";
 import MosaicoBarbearia from "./MosaicoBarbearia";
+import RodapeCompacto from "./RodapeCompacto";
 import SeloSantoVisu from "./SeloSantoVisu";
 import { chapters, ou } from "@/lib/chapters";
 
@@ -50,6 +51,7 @@ export default function Barbearia() {
           </Cta>
       }
       assinatura={<SeloSantoVisu />}
+      rodape={<RodapeCompacto />}
     />
   );
 }

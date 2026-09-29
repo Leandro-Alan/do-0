@@ -22,7 +22,7 @@ export const contentType = "image/png";
 export default function Icone() {
   const hero = chapters[0].paleta;
   const archivo = readFileSync(
-    join(process.cwd(), "assets-originais/fontes/archivo-800.ttf")
+    join(process.cwd(), "recursos/fontes/archivo-800.ttf")
   );
 
   return new ImageResponse(

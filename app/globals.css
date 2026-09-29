@@ -121,6 +121,120 @@ body {
   --gutter: clamp(1.25rem, 6vw, 5rem);
 }
 
+/* O escurecimento de quem fica coberto no deck. Camada solida com opacidade
+   animada, e nao `filter: brightness` no palco: a regra do projeto proibe
+   filtro animado. Fica acima de tudo do palco e nunca pega clique. */
+.dim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* A faixa compacta do rodape so existe no deck (ver o bloco abaixo). No
+   celular o <Rodape> de verdade vem depois da pilha, em fluxo. */
+.rodape-embutido {
+  display: none;
+}
+
+/* ------------------------------------------------ deck (desktop) --- */
+
+/* Os tres numeros tem que bater com o `DECK` do ChapterStack.tsx. Aqui dentro
+   nao existe scroll de pagina: cada capitulo e uma caixa fixa do tamanho da
+   tela, todas empilhadas no mesmo lugar, e quem entra e sai e o `.palco`,
+   movido pelo GSAP em `yPercent`. */
+@media (min-width: 1024px) and (min-height: 640px) and (prefers-reduced-motion: no-preference) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .marco {
+    display: none;
+  }
+
+  /* A caixa fixa e transparente e nao pega clique: ela cobre a tela inteira
+     mesmo quando o palco dela esta fora de cena, e sem isso o capitulo de
+     indice maior (o ultimo, com o palco la embaixo) comeria o clique de todos
+     os de baixo. Quem recebe clique e o palco. */
+  .capitulo,
+  .capitulo--ultimo {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100svh;
+    min-height: 0;
+    margin: 0;
+    pointer-events: none;
+  }
+
+  .palco {
+    height: 100%;
+    min-height: 0;
+    pointer-events: auto;
+    will-change: transform;
+  }
+
+  /* o rodape em fluxo nao tem como ser alcancado sem scroll: no deck ele vira
+     a faixa compacta dentro do ultimo capitulo */
+  .rodape {
+    display: none;
+  }
+
+  .rodape-embutido {
+    position: relative;
+    z-index: 2;
+    display: block;
+    flex: none;
+  }
+}
+
+/* --------------------------------------------- rodape compacto (deck) --- */
+
+.rc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 2rem;
+  padding: 0.875rem var(--gutter) 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
+  font-size: 0.813rem;
+  color: var(--fg);
+}
+
+.rc-copy {
+  color: var(--muted);
+}
+
+.rc-sotalia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+
+.rc-sotalia b {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.rc-golfinho {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+.rc-direct {
+  margin-left: auto;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 /* ---------------------------------------------------------- tipografia --- */
 
 .etiqueta {
@@ -2600,7 +2714,9 @@ body {
 }
 
 .rodape-assinatura-sotalia:hover .sot-ponto,
-.rodape-assinatura-sotalia:focus-visible .sot-ponto {
+.rodape-assinatura-sotalia:focus-visible .sot-ponto,
+.rc-sotalia:hover .sot-ponto,
+.rc-sotalia:focus-visible .sot-ponto {
   animation: sot-salto 0.62s var(--ease-saida) both;
 }
 

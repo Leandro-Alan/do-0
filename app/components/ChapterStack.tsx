@@ -51,11 +51,15 @@ export function useAoAtivar(id: string, cb: () => void) {
   const { ativo } = useCapituloAtivo();
   const indice = chapters.findIndex((c) => c.id === id);
   const ref = useRef(cb);
-  ref.current = cb;
+
+  // a ref acompanha o `cb` mais recente fora do render (escrever ref durante o
+  // render e proibido pelas regras de hooks do React 19)
+  useEffect(() => {
+    ref.current = cb;
+  });
 
   useEffect(() => {
     if (ativo === indice) ref.current();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ativo, indice]);
 }
 
@@ -73,6 +77,48 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     const palco = (s: HTMLElement) => s.querySelector<HTMLElement>(".palco")!;
     const dim = (s: HTMLElement) => s.querySelector<HTMLElement>(".dim")!;
 
+    /* No deck os sete capitulos sao caixas fixas empilhadas na MESMA area da
+       tela, entao todos cruzam a linha do meio ao mesmo tempo e o
+       IntersectionObserver elegeria qualquer um. Enquanto o deck vale, quem
+       manda no `ativo` e so o `goTo`. */
+    let emDeck = false;
+
+    /* [deck]: capitulo cujo conteudo nao cabe na tela. Vale nos dois modos —
+       no deck e no snap do celular cada capitulo tem exatamente uma tela, e o
+       que passar disso e cortado sem aviso. Roda no load e a cada resize. */
+    let pedidoChecagem = 0;
+    const checarCaber = () => {
+      cancelAnimationFrame(pedidoChecagem);
+      pedidoChecagem = requestAnimationFrame(() => {
+        for (const s of secoes) {
+          // mede so o que e CONTEUDO (texto, botao, campo, foto com alt) e
+          // esta visivel: listras, cordilheira e marcas d'agua sao decoracao
+          // que sangra pela borda de proposito, e contar elas daria alarme
+          // falso. `scrollHeight` do palco caia exatamente nessa armadilha.
+          const p = palco(s);
+          const fundo = p.getBoundingClientRect().bottom;
+          let excesso = 0;
+          for (const el of p.querySelectorAll<HTMLElement>(
+            "h1, h2, p, a, button, input, li, blockquote, figcaption, img[alt]:not([alt=''])"
+          )) {
+            if (el.closest("[aria-hidden='true']") || el.offsetParent === null) continue;
+            const r = el.getBoundingClientRect();
+            if (r.height === 0) continue;
+            excesso = Math.max(excesso, Math.round(r.bottom - fundo));
+          }
+          if (excesso > 1) {
+            console.warn(
+              `[deck] ${s.dataset.id} passa da tela em ${excesso}px (${window.innerWidth}x${window.innerHeight})`
+            );
+          }
+        }
+      });
+    };
+    window.addEventListener("resize", checarCaber);
+    // depois das fontes, que mudam a altura dos titulos
+    document.fonts?.ready.then(checarCaber);
+    checarCaber();
+
     /* ------------------------------------------------------------------
        MOBILE / TABLET / reduced-motion: scroll de verdade, snap nativo.
        Cada capitulo e 100svh no CSS (globals.css cuida disso) — aqui so
@@ -88,7 +134,7 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     const io = new IntersectionObserver(
       (entradas) => {
         for (const entrada of entradas) {
-          if (!entrada.isIntersecting) continue;
+          if (emDeck || !entrada.isIntersecting) continue;
           const i = secoes.indexOf(entrada.target as HTMLElement);
           if (i !== -1) setAtivo(i);
         }
@@ -116,13 +162,14 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
        jogado uma tela inteira pra baixo, fora da area visivel do proprio
        pai. O `.capitulo` (a caixa fixa) nunca se move: so o filho.
 
-       `zTopo` garante que quem esta ENTRANDO pinta por cima de tudo, nos
-       dois sentidos. Sem isso a ordem natural do documento so favoreceria
-       ir pra frente (indice maior por cima) — voltar exigiria o contrario.
+       O empilhamento e a ORDEM DO DOCUMENTO (z-index = indice), e ela serve
+       nos dois sentidos: indo pra frente, quem entra tem indice maior e sobe
+       por cima; voltando, quem SAI tem indice maior e desce por cima de quem
+       fica embaixo, desencobrindo ele. Subir quem entra pro topo quebraria a
+       volta: o capitulo que desce sumiria atras do outro.
        ------------------------------------------------------------------ */
     let atual = 0;
     let travado = false;
-    let zTopo = n + 1;
 
     const preparar = () => {
       gsap.set(
@@ -144,9 +191,6 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
       const anterior = atual;
       atual = proximo;
       setAtivo(proximo);
-
-      zTopo += 1;
-      secoes[proximo].style.zIndex = String(zTopo);
 
       const tl = gsap.timeline({
         defaults: { duration: 0.85, ease: "power3.inOut" },
@@ -190,9 +234,15 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     let observer: Observer | undefined;
     let aoTeclado: ((e: KeyboardEvent) => void) | undefined;
 
+    // Fora do deck, navegar e rolar. Tem que vir ANTES do `mm.add`: o
+    // matchMedia roda o callback na hora quando a tela ja e desktop, e ele
+    // troca isto pelo `goTo` — escrito depois, apagaria o `goTo`.
+    irRef.current = irPorScroll;
+
     const mm = gsap.matchMedia();
 
     mm.add(DECK, () => {
+      emDeck = true;
       preparar();
 
       observer = Observer.create({
@@ -206,6 +256,9 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
       });
 
       aoTeclado = (e: KeyboardEvent) => {
+        // quem esta digitando (o nome no cracha) precisa do espaco e das setas
+        const alvo = e.target;
+        if (alvo instanceof Element && alvo.closest("input, textarea, select, [contenteditable]")) return;
         if (["ArrowDown", "PageDown", " "].includes(e.key)) {
           e.preventDefault();
           goTo(atual + 1);
@@ -225,6 +278,7 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
       irRef.current = goTo;
 
       return () => {
+        emDeck = false;
         observer?.kill();
         window.removeEventListener("keydown", aoTeclado!);
         irRef.current = irPorScroll;
@@ -238,10 +292,10 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
       };
     });
 
-    irRef.current = irPorScroll;
-
     return () => {
       io.disconnect();
+      cancelAnimationFrame(pedidoChecagem);
+      window.removeEventListener("resize", checarCaber);
       mm.revert();
     };
   }, []);

@@ -24,7 +24,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
-const DESTINO = resolve(AQUI, "../assets-originais/fontes");
+const DESTINO = resolve(AQUI, "../recursos/fontes");
 
 /**
  * UA velho o bastante pra o Google Fonts servir TTF em vez de WOFF2 — e tem

@@ -37,7 +37,7 @@ import sharp from "sharp";
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, "..");
 const ORIGEM = resolve(RAIZ, "public/fotos/andre-4.webp");
-const DESTINO = resolve(RAIZ, "assets-originais/og");
+const DESTINO = resolve(RAIZ, "recursos/og");
 
 /** O painel da esquerda na imagem de 1200x630. */
 const L = 470;
