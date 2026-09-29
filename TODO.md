@@ -173,7 +173,10 @@ celular, duotone assado.
 - **Aviso `[deck]` a 1366×650:** hero passa 96px, Fortix 31px, Choque 28px.
   A 1900×870, só o hero, 16px. Ajustar como foi feito no Barbers Vale
   (bloco `max-height: 1000px` com tamanhos em `svh`), se o Leandro vir corte.
-- **Selo girando sem parar (pedido em avaliação):** hoje o anel gira uma vez
-  quando a Santo Visu vira ativa. Possível com uma animação CSS contínua de
-  `transform` no anel (barata, respeitando reduced-motion), tirando o giro
-  único do `SeloSantoVisu.tsx` pra os dois não brigarem.
+- ~~Selo girando sem parar~~ ✅ **feito.** O anel gira sem parar, sempre —
+  `@keyframes ba-girar` em `globals.css`, 22s por volta, `linear`. Saiu o giro
+  único do `SeloSantoVisu.tsx` (o componente nem precisa mais de
+  `"use client"`): os dois brigariam pelo mesmo `transform`, já que o GSAP
+  escreve `style.transform` inline e isso sempre vence a `animation` da
+  folha. `prefers-reduced-motion` mora inteiro no CSS — a animação some
+  inteira, não só a duração (com `infinite` isso deixaria o anel tremendo).

@@ -2508,6 +2508,28 @@ body {
   mask-image: url(/marca/santovisu-anel.svg);
 }
 
+/* O giro continuo do anel — pedido do Leandro em 29/09, depois do "assenta e
+   para" original. E CSS puro, nao GSAP: um `animation` de `transform` no
+   proprio elemento e mais barato que manter uma timeline viva pra sempre, e
+   os dois brigariam pelo mesmo `transform` se coexistissem (GSAP escreve
+   `style.transform` inline, que sempre vence a `animation` da folha — o giro
+   continuo travaria no angulo onde o JS o deixou). Por isso o giro de entrada
+   saiu de `SeloSantoVisu.tsx`: agora so existe ESTE giro, sem overshoot, que
+   comeca no primeiro frame e nunca para — carimbo virando engrenagem, nao
+   selo assentando. `prefers-reduced-motion` mata a animacao inteira, nao so a
+   duracao: com `infinite` zerar so a duracao deixaria o anel tremendo. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-id="barbearia"] .ba-selo-anel {
+    animation: ba-girar 22s linear infinite;
+  }
+}
+
+@keyframes ba-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 [data-id="barbearia"] .ba-selo-miolo {
   -webkit-mask-image: url(/marca/santovisu-miolo.svg);
   mask-image: url(/marca/santovisu-miolo.svg);
