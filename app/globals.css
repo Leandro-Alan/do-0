@@ -133,12 +133,6 @@ body {
   pointer-events: none;
 }
 
-/* A faixa compacta do rodape so existe no deck (ver o bloco abaixo). No
-   celular o <Rodape> de verdade vem depois da pilha, em fluxo. */
-.rodape-embutido {
-  display: none;
-}
-
 /* ------------------------------------------------ deck (desktop) --- */
 
 /* Os tres numeros tem que bater com o `DECK` do ChapterStack.tsx. Aqui dentro
@@ -179,60 +173,24 @@ body {
     will-change: transform;
   }
 
-  /* o rodape em fluxo nao tem como ser alcancado sem scroll: no deck ele vira
-     a faixa compacta dentro do ultimo capitulo */
-  .rodape {
-    display: none;
+  /* O rodape e o ULTIMO PASSO do deck: sem scroll de pagina ele nao teria como
+     ser alcancado em fluxo, entao vira uma folha presa no pe da tela que sobe
+     por cima da Santo Visu com mais um gesto (o ChapterStack move ele em
+     `yPercent`, de 100 pra 0) e desce de volta no gesto contrario. Acima dos
+     capitulos, abaixo do rail. `body` na frente pela especificidade: o
+     `.rodape` base vem depois no arquivo e o `position: relative` dele
+     ganharia deste. */
+  body .rodape {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    max-height: 100vh;
+    max-height: 100svh;
+    overflow-y: auto;
+    will-change: transform;
   }
-
-  .rodape-embutido {
-    position: relative;
-    z-index: 2;
-    display: block;
-    flex: none;
-  }
-}
-
-/* --------------------------------------------- rodape compacto (deck) --- */
-
-.rc {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 2rem;
-  padding: 0.875rem var(--gutter) 1rem;
-  border-top: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
-  font-size: 0.813rem;
-  color: var(--fg);
-}
-
-.rc-copy {
-  color: var(--muted);
-}
-
-.rc-sotalia {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted);
-}
-
-.rc-sotalia b {
-  font-weight: 700;
-  color: var(--fg);
-}
-
-.rc-golfinho {
-  width: 1.125rem;
-  height: 1.125rem;
-  flex: none;
-}
-
-.rc-direct {
-  margin-left: auto;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
 }
 
 /* ---------------------------------------------------------- tipografia --- */
@@ -1819,6 +1777,78 @@ body {
   }
 }
 
+/* --- palestras em duas colunas (1024+) ---
+
+   O Leandro achou a foto "enterrada": empilhada embaixo dos temas, ela ficava
+   no pe do capitulo e a 1366x650 passava da tela em 126px. Agora o capitulo
+   vira duas colunas de verdade: TUDO o que e texto e pedido na esquerda
+   (etiqueta, titulo, frase, temas, citacao e CTA) e a tela de projetor na
+   direita, centralizada na altura.
+
+   O bloco editorial continua entrando pelo slot `provas` do esqueleto; o
+   involucro do slot e o `.pl-editorial` viram `display: contents`, e com isso
+   temas, tela e citacao passam a ser itens do mesmo grid que o titulo. Nenhum
+   slot novo no <Chapter>.
+
+   Titulo e citacao em svh: o que aperta aqui e a ALTURA da tela, nao a
+   largura. A tela de projetor para em 72% da altura (4:3) e nunca passa dos
+   604px reais do arquivo. */
+@media (min-width: 1024px) {
+  [data-id="palestras"] .palco-conteudo {
+    display: grid;
+    grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+    align-content: center;
+    column-gap: clamp(2rem, 4vw, 4.5rem);
+    row-gap: clamp(0.5rem, 1.8svh, 1.125rem);
+    padding-top: clamp(3rem, 8svh, 5rem);
+    padding-bottom: clamp(1.5rem, 5svh, 3rem);
+  }
+
+  [data-id="palestras"] .palco-conteudo > * {
+    grid-column: 1;
+  }
+
+  [data-id="palestras"] .palco-conteudo > div:has(> .pl-editorial),
+  [data-id="palestras"] .pl-editorial {
+    display: contents;
+  }
+
+  /* `grid-area: auto` primeiro: o bloco de 900px nomeia areas ("temas",
+     "tela", "citacao") que nao existem neste grid, e area desconhecida vira
+     linha implicita — a citacao ia parar ACIMA do titulo. */
+  [data-id="palestras"] .pl-temas,
+  [data-id="palestras"] .pl-citacao {
+    grid-area: auto;
+    grid-column: 1;
+  }
+
+  [data-id="palestras"] .pl-tela {
+    grid-area: auto;
+    grid-column: 2;
+    grid-row: 1 / 7;
+    align-self: center;
+    justify-self: center;
+    width: min(100%, calc(72svh * 4 / 3));
+    max-width: 604px;
+  }
+
+  [data-id="palestras"] .titulo {
+    font-size: clamp(2.5rem, 10svh, 6.25rem);
+  }
+
+  [data-id="palestras"] .subtitulo {
+    font-size: clamp(1.125rem, 3.2svh, 1.625rem);
+  }
+
+  [data-id="palestras"] .pl-citacao {
+    margin-block: clamp(0.25rem, 1.5svh, 1rem);
+  }
+
+  [data-id="palestras"] .pl-citacao-texto {
+    font-size: clamp(1.25rem, 4.2svh, 2.375rem);
+  }
+}
+
 /* --------------------------------------------------- capitulo 05 YouTube --- */
 
 [data-id="youtube"] {
@@ -2714,9 +2744,7 @@ body {
 }
 
 .rodape-assinatura-sotalia:hover .sot-ponto,
-.rodape-assinatura-sotalia:focus-visible .sot-ponto,
-.rc-sotalia:hover .sot-ponto,
-.rc-sotalia:focus-visible .sot-ponto {
+.rodape-assinatura-sotalia:focus-visible .sot-ponto {
   animation: sot-salto 0.62s var(--ease-saida) both;
 }
 

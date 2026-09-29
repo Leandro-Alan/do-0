@@ -76,6 +76,9 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     const n = secoes.length;
     const palco = (s: HTMLElement) => s.querySelector<HTMLElement>(".palco")!;
     const dim = (s: HTMLElement) => s.querySelector<HTMLElement>(".dim")!;
+    // O rodape mora fora da pilha (em fluxo, depois dela). No deck ele vira o
+    // passo `n`, um depois da Santo Visu.
+    const rodape = document.querySelector<HTMLElement>(".rodape");
 
     /* No deck os sete capitulos sao caixas fixas empilhadas na MESMA area da
        tela, entao todos cruzam a linha do meio ao mesmo tempo e o
@@ -172,6 +175,7 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     let travado = false;
 
     const preparar = () => {
+      if (rodape) gsap.set(rodape, { yPercent: 100 });
       gsap.set(
         secoes.map(palco),
         { yPercent: (i: number) => (i === 0 ? 0 : 100), scale: 1, borderRadius: 0 }
@@ -185,12 +189,14 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     };
 
     function goTo(alvo: number) {
-      const proximo = gsap.utils.clamp(0, n - 1, alvo);
+      // o passo `n` e o rodape; os traços do rail vao ate n - 1
+      const ultimo = rodape ? n : n - 1;
+      const proximo = gsap.utils.clamp(0, ultimo, alvo);
       if (travado || proximo === atual) return;
       travado = true;
-      const anterior = atual;
+      let anterior = atual;
       atual = proximo;
-      setAtivo(proximo);
+      setAtivo(Math.min(proximo, n - 1));
 
       const tl = gsap.timeline({
         defaults: { duration: 0.85, ease: "power3.inOut" },
@@ -202,6 +208,24 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
           });
         },
       });
+
+      if (rodape && proximo === n) {
+        // mais um gesto depois da Santo Visu: o rodape sobe por cima dela
+        tl.fromTo(rodape, { yPercent: 100 }, { yPercent: 0 }, 0).to(
+          dim(secoes[n - 1]),
+          { opacity: OPACIDADE_DIM },
+          0
+        );
+        return;
+      }
+
+      if (rodape && anterior === n) {
+        // saindo do rodape: ele desce, e se o destino for mais longe que a
+        // Santo Visu, a troca de capitulo acontece junto, a partir dela
+        tl.to(rodape, { yPercent: 100 }, 0).to(dim(secoes[n - 1]), { opacity: 0 }, 0);
+        anterior = n - 1;
+        if (proximo === anterior) return;
+      }
 
       if (proximo > anterior) {
         tl.to(palco(secoes[anterior]), { scale: 0.92, borderRadius: RAIO }, 0)
@@ -233,6 +257,7 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
 
     let observer: Observer | undefined;
     let aoTeclado: ((e: KeyboardEvent) => void) | undefined;
+    let aoClicar: ((e: MouseEvent) => void) | undefined;
 
     // Fora do deck, navegar e rolar. Tem que vir ANTES do `mm.add`: o
     // matchMedia roda o callback na hora quando a tela ja e desktop, e ele
@@ -275,12 +300,30 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
       };
       window.addEventListener("keydown", aoTeclado);
 
+      // Link de ancora (#barbersvale...) nao tem o que rolar no deck. Qualquer
+      // um que aponte pra um capitulo, em qualquer lugar da pagina (o indice
+      // do rodape, principalmente), vira um goTo.
+      aoClicar = (e: MouseEvent) => {
+        // o Indice e o SeloEvento ja resolvem o proprio clique
+        if (e.defaultPrevented) return;
+        const a = (e.target as Element | null)?.closest?.("a[href^='#']");
+        if (!a) return;
+        const id = a.getAttribute("href")!.slice(1);
+        const i = secoes.findIndex((s) => s.dataset.id === id);
+        if (i === -1) return;
+        e.preventDefault();
+        goTo(i);
+      };
+      document.addEventListener("click", aoClicar);
+
       irRef.current = goTo;
 
       return () => {
         emDeck = false;
         observer?.kill();
         window.removeEventListener("keydown", aoTeclado!);
+        document.removeEventListener("click", aoClicar!);
+        if (rodape) gsap.set(rodape, { clearProps: "all" });
         irRef.current = irPorScroll;
         // limpa TODO estilo inline que o deck escreveu, pra devolver os
         // capitulos ao fluxo normal (sticky/snap) do CSS de fora do deck

@@ -24,12 +24,6 @@ import { TOTAL } from "@/lib/chapters";
  * elemento a parte (nao um filtro no `.palco`) porque a regra do projeto
  * proibe `filter`/`backdrop-filter` animado: mexer em opacidade de uma camada
  * solida rende igual e nao pesa a composicao.
- *
- * `rodape`: so a Barbearia usa. No deck de desktop nao ha mais scroll pra
- * alcancar um rodape depois do ultimo capitulo, entao a versao compacta mora
- * AQUI DENTRO — visivel so no deck (globals.css decide); no snap do celular
- * ela fica escondida e o <Rodape> de verdade, em fluxo depois da pilha,
- * continua sendo o caminho normal.
  */
 export default function Chapter({
   cap,
@@ -42,7 +36,6 @@ export default function Chapter({
   ctaPrincipal,
   ctaSecundario,
   assinatura,
-  rodape,
 }: {
   cap: Capitulo;
   /** o ultimo capitulo nao e coberto por ninguem no snap do celular */
@@ -56,8 +49,6 @@ export default function Chapter({
   ctaPrincipal?: ReactNode;
   ctaSecundario?: ReactNode;
   assinatura?: ReactNode;
-  /** faixa compacta so pro deck de desktop. So a Barbearia usa. */
-  rodape?: ReactNode;
 }) {
   const p = cap.paleta;
 
@@ -124,8 +115,6 @@ export default function Chapter({
           )}
 
           {assinatura}
-
-          {rodape && <div className="rodape-embutido">{rodape}</div>}
 
           <span className="dim" aria-hidden="true" />
         </div>
