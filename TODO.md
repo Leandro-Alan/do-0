@@ -146,100 +146,34 @@ quando chegar**.
 
 ---
 
-## 🔴 ABERTO — o que o Leandro viu em 29/09 e ainda não está resolvido
+## Estado em 29/09 (fim do dia)
 
-Feedback dado depois da entrega, olhando nas três telas reais dele. **A tela de
-27" está perfeita; o problema é notebook e celular.**
+No ar em **https://ecossistema-andre.vercel.app** (`main` do `Leandro-Alan/do-0`).
+Mecânica nova descrita no CLAUDE.md: deck no desktop, rolagem normal no
+celular, duotone assado.
 
-### 1. ✅ O capítulo não SEGURA — resolvido, e o número que faltava
+### Resolvido hoje
+- Capítulo que "não segurava": no desktop cada gesto troca exatamente um
+  capítulo; no celular a rolagem é normal e nada corta.
+- Rail travado na cor do hero, e rail que não acompanhava a subida no celular.
+- Botão do YouTube: o problema era a transição comendo a rolagem; com o deck
+  o play fica à mão. **Falta o Leandro confirmar que o vídeo toca** (daqui o
+  feed e o `vercel.app` não abrem).
+- Cursos e palestras: duas colunas no desktop (texto à esquerda, projetor à
+  direita), cabe em 1366×650.
+- Rodapé completo de volta (no deck é o último passo).
+- Contador do Barbers Vale cabendo no notebook.
+- Santo Visu: "Cinco unidades", em linha própria; no celular o selo fica ao
+  lado do texto; foto do salão parada.
+- Faixa do lema do Choque removida (`FaixaLema.tsx` sem uso).
+- Site travando no celular: duotone assado + grão só no desktop.
+- "feito por Sotalia Hub" → WhatsApp do Leandro com mensagem pronta.
 
-**Duas tentativas erradas antes.** O `scroll-snap` quebrou o site (prende a
-rolagem no topo, capítulo alto deixa de rolar até o fim, rodapé inalcançável)
-e foi revertido no mesmo dia — **não tentar de novo**, está registrado no topo
-do `globals.css`. Depois um piso de 12% da tela, que era pequeno demais.
-
-**O que faltava era medir.** A 1900×870: o capítulo ficava parado e completo
-por **104px**, contra **870px de transição** — 89% da rolagem com dois
-capítulos na tela ao mesmo tempo. Uma volta da rodinha do mouse (~100px) comia
-a janela inteira. Daí "nenhum slide para completo".
-
-**A transição não dá pra encurtar**: o capítulo que entra percorre de
-`y = tela` até `y = 0`, e isso é uma tela de rolagem por definição do sticky.
-Então a única moeda que faz o capítulo parar é dar a ele a mesma quantidade:
-`--respiro = excesso + uma tela`.
-
-Medido depois, a 1900×870: **870px parado por capítulo (50% da rolagem)**, os
-sete cabendo em 1,00 tela, documento de 7598 → 11728px. O ritmo inteiro sai de
-**um número só**, em `ChapterStack.tsx` — se ficar longo demais, é ali.
-
-### 2. ✅ Botão do YouTube — era o MESMO problema
-
-Medido: nada tapando (`elementFromPoint` devolvia o próprio botão), href certo,
-o clique trocava a capa pelo iframe e o vídeo tocava. **O botão nunca esteve
-quebrado** — com 89% da rolagem em transição, quando a pessoa mirava no play o
-Santo Visu já estava subindo por cima. Com a janela de 870px o capítulo fica
-parado e o play fica à mão. Conferido no print.
-
-### 3. ✅ Cursos e palestras cortado, e sem botão
-
-Medido: 1033px numa viewport de 870, com o CTA "Solicitar proposta" em y=915 —
-ou seja, o botão **existia** e nunca aparecia sem rolar. Capítulo de venda sem
-botão à vista é capítulo quebrado. Ganhou bloco em
-`(min-width: 900px) and (max-height: 899px)` e fecha em 1,00 tela. Os 163px
-saíram das duas pontas do padding, do gap e do teto da tela de projetor
-(30rem, bem abaixo dos 604px reais do arquivo — sem ampliar nada).
-**Nenhum corte de conteúdo.**
-
-### 3b. ✂️ Faixa do lema do capítulo 03 — REMOVIDA
-
-Saiu a pedido do Leandro ("está perdida aqui, não gostei"), e ele confirmou
-que o Choque pode ficar sem elemento-assinatura: "tudo bem não ter, a ideia é
-ser slim". `FaixaLema.tsx` continua no projeto, sem uso, como o `Unidades.tsx`.
-
-### 3c. 🔴 Santo Visu diz "Três unidades" e são CINCO
-
-`lib/chapters.ts`, subtítulo do capítulo 06. O Leandro apontou em 29/09 e
-pediu pra deixar pra depois — mas é **erro factual numa demo de prospecção**,
-uma linha, e não pode ir pro André assim.
-
-### 3d. ⏳ Notebook/celular apertado — reaberto, sem medição
-
-As duas mexidas de padding do primeiro lote foram revertidas (eram chute).
-O Palestras foi resolvido com medição; os outros seis capítulos agora fecham
-em 1,00 tela a 870 de altura, então o "apertado" pode ter ido junto.
-**Celular ainda não foi visto por ninguém.**
-
-### 4. ✅ O rail do topo travou na cor do hero — CONSERTADO
-
-**A suspeita anotada aqui estava errada, e dá pra descartar lendo a fonte do
-GSAP.** Não era o `ScrollTrigger.refresh()` medir antes do layout assentar:
-escrita de `style` é visível pra qualquer leitura de layout na mesma tarefa de
-JS, e `refresh()` força layout síncrono ao medir. Não existe janela de "layout
-não assentado" dentro de um mesmo frame. E `refresh()` ainda reencena as
-bordas no fim (`_updateAll(2)`, `ScrollTrigger.js:562`) — os callbacks só ficam
-mudos durante o refresh do próprio gatilho (`stateChanged && !_refreshing`,
-linhas 1689 e 1751). Os 7 gatilhos também estavam configurados certo:
-`isToggle` e `callbacks` (linhas 967 e 972) não dependem de animação.
-
-**A causa é de desenho, não de timing:** o `ativo` era a *soma* de eventos de
-borda — `onEnter` somava, `onLeaveBack` subtraía — e nada nunca reconciliava
-esse número com o que estava pintado na tela. Estado assim não se corrige: uma
-borda perdida ou repetida prende o rail naquele índice pra sempre. E no celular
-as bordas se mexem no meio da rolagem, porque `--respiro` é calculado sobre
-`window.innerHeight` e a barra de endereço do iOS muda essa altura enquanto a
-pessoa rola — cada mudança reescreve a posição dos sete marcos. **É isso que
-explica o sintoma ser só no celular:** na tela de 27" `resize` nunca dispara,
-as bordas nunca se mexem, e lá o rail funciona.
-
-**O conserto tira a classe inteira do problema** em vez de remendar a borda: os
-7 ScrollTriggers saíram e o capítulo ativo passou a ser lido da geometria viva
-a cada quadro — é o de maior índice cujo topo já passou da linha de 55% da
-tela. Mesma linha de antes (`"top 55%"`), mesmo comportamento documentado, mas
-sem medida em cache: um quadro perdido se conserta no quadro seguinte. De
-brinde, o rodapé parou de zerar o rail.
-
-Fechado com `tsc`, `eslint` e `build`.
-
-> **Nota de processo:** o Leandro pediu pra eu **não abrir o Playwright por
-> conta própria** — ele confere nas telas dele. Fechar com `tsc`, `eslint` e
-> `build`, medir com script quando der, e entregar.
+### Ainda aberto
+- **Aviso `[deck]` a 1366×650:** hero passa 96px, Fortix 31px, Choque 28px.
+  A 1900×870, só o hero, 16px. Ajustar como foi feito no Barbers Vale
+  (bloco `max-height: 1000px` com tamanhos em `svh`), se o Leandro vir corte.
+- **Selo girando sem parar (pedido em avaliação):** hoje o anel gira uma vez
+  quando a Santo Visu vira ativa. Possível com uma animação CSS contínua de
+  `transform` no anel (barata, respeitando reduced-motion), tirando o giro
+  único do `SeloSantoVisu.tsx` pra os dois não brigarem.

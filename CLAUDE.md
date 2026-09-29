@@ -1,7 +1,9 @@
 # André Alves — hub pessoal (substitui o Linktree)
 
 **Status (29/09/2026):** os sete capítulos, o rodapé, o preview de link e a
-medição estão prontos. É **demo de prospecção** — o André ainda não viu nada
+medição estão prontos, e **no ar em https://ecossistema-andre.vercel.app**.
+Repositório: `Leandro-Alan/do-0` (o site está na raiz); a Vercel publica o
+`main` em produção e cada push de outra branch vira preview. É **demo de prospecção** — o André ainda não viu nada
 disso. Nada pode aparecer quebrado, vazio ou "em breve".
 
 André Alves (@andresantovisu) é empresário do mercado de barbearia em
@@ -32,9 +34,9 @@ interno do Instagram, em 4G. Então:
 
 - **Next.js 16.3 App Router + TypeScript**, sem `src/`, alias `@/*`
 - **Tailwind v4** (`@import "tailwindcss"` + `@theme inline` em `globals.css`)
-- **GSAP + ScrollTrigger via npm**, registrado num **único client component**
-  (`app/components/ChapterStack.tsx`). Nenhum outro arquivo chama
-  `gsap.registerPlugin`.
+- **GSAP + plugin Observer via npm**, registrado num **único client
+  component** (`app/components/ChapterStack.tsx`). Nenhum outro arquivo chama
+  `gsap.registerPlugin`. **ScrollTrigger não é mais usado** (saiu em 29/09).
 - **next/image** e **next/font** (Archivo). Sem CDN de fonte.
 - `npm run dev` sobe na **3010** com `-H 0.0.0.0` (3000-3009 já são de outros
   projetos daqui). Deploy na Vercel.
@@ -58,83 +60,77 @@ Ordem (é a ordem do array em `lib/chapters.ts`, e só isso):
 | 06 | `barbearia` | Santo Visu Barbearia |
 | — | — | rodapé normal |
 
-## Mecânica do empilhamento
+## Mecânica: deck no desktop, rolagem normal no celular
 
-- Cada capítulo é um `<section class="capitulo">` **sticky, `top: 0`,
-  `min-height: 100svh`**. Todos são **irmãos diretos** dentro de `.pilha` — é
-  o que faz um segurar enquanto o outro passa por cima. Não envolver um
-  capítulo num wrapper próprio: quebra o efeito.
-- **Capítulo mais alto que a viewport:** `top = min(0, alturaViewport −
-  alturaSeção)`, recalculado por `ResizeObserver` e gravado em `--top`. Sem
-  isso o pé do capítulo fica escondido embaixo do capítulo seguinte.
-- **TODO capítulo ganha um RESPIRO depois de si** (`--respiro`, margem
-  inferior escrita pelo mesmo `ResizeObserver`), e ele vale **uma tela
-  inteira** mais o excesso: `excesso + alturaViewport`.
-  - **A conta é 50/50, e é o coração do ritmo do site.** A transição custa
-    exatamente **uma tela** de rolagem e isso não dá pra encurtar: o capítulo
-    que entra percorre de `y = tela` até `y = 0`, o que é a definição do
-    sticky. Então a única moeda que faz o capítulo **parar** é dar a ele a
-    mesma quantidade: uma tela parado, uma tela trocando.
-  - **Medido antes de existir, a 1900×870:** o capítulo ficava parado e
-    completo por **104px** contra **870px** de transição — 89% da rolagem com
-    dois capítulos na tela. Uma volta da rodinha do mouse (~100px) comia a
-    janela inteira. Foi o que o Leandro descreveu em 29/09: "nenhum slide
-    para completo, roda um pouquinho pra cima e já pega a parte de cima".
-  - **O mesmo número explicava o botão do YouTube "que não dá pra clicar":**
-    não havia nada tapando (medido, `elementFromPoint` devolvia o próprio
-    botão) — só que, com 89% da rolagem em transição, quando a pessoa mirava
-    no play o capítulo seguinte já estava subindo por cima.
-  - Depois: **870px parado por capítulo, 50% da rolagem**, e o documento foi
-    de 7598 para 11728px numa tela de 870. **Quem quiser mexer no ritmo mexe
-    num número só**, o coeficiente em `ChapterStack.tsx`.
-  - O excesso continua sendo pago por cima disso, pelo motivo antigo: uma
-    seção de altura `A` numa tela `V`, grudando em `top = V − A`, mostra o
-    corpo inteiro no exato instante em que gruda, e a seção seguinte começa a
-    subir **nesse mesmo instante**.
-- **NUNCA usar `scroll-snap` de página aqui.** Tentado e revertido em 29/09:
-  `scroll-snap-stop: always` com `mandatory` prende a rolagem no topo de cada
-  capítulo, e capítulo mais alto que a tela deixa de poder ser rolado até o
-  fim — fica cortado. O rodapé, que não é alvo de snap, vira inalcançável. O
-  "assentar" vem do `--respiro`, não de snap. O comentário está no topo do
-  `globals.css`.
-- **Tela baixa e larga (notebook) tem bloco próprio pro hero**
-  (`min-width: 900px and max-height: 899px`). O respiro tornou o índice
-  alcançável; esse bloco faz o hero **caber**, que é melhor: o índice é a razão
-  de ser da capa e tem que ser lido de uma vez. É media query de **altura**, e
-  não clamp menor, porque a 1440 os respiros do desktop já estão no teto do
-  clamp — baixar o coeficiente em vh encolheria a tela de 27" junto. Medido:
-  840 → 764 em 768, e 875 → 812 em 864.
-- **Cada capítulo é precedido por um `<div data-marco>` de altura zero.** Ele
-  não gruda, então é ele que o ScrollTrigger mede. Medir a própria seção
-  sticky dá posição errada. O `Chapter` devolve marco + seção juntos.
-- **O `id` de âncora vive no marco, não na seção.** Âncora pra elemento sticky
-  não funciona: grudado no topo ele devolve `rect.top = 0`, o navegador conclui
-  que já está na tela e não rola nada. `#barbersvale` aponta pro marco.
-- **Nunca pôr `scroll-behavior: smooth` no `html`.** O ScrollTrigger rola a
-  página sozinho pra remedir, e com smooth global esse pulo vira animação
-  visível. Quem precisa de suavidade chama `scrollIntoView({behavior:"smooth"})`
-  — é o que o `ProgressRail` e o `Indice` fazem, sempre checando
-  `prefers-reduced-motion` antes.
-- **Coberto (scrub):** o capítulo que está sendo tapado vai de `scale 1→0.92`,
-  `brightness 1→0.5`, `radius 0→28px`. Quem entra tem os **cantos de cima** em
-  28px, zerando quando encosta no topo.
-- Anima só `transform`, `filter`, `opacity` — e `border-radius`, que o
-  conceito exige. Nada de `width`, `height` ou `top` animados.
-- Tudo isso mora no **palco** (`.palco`), o filho da seção. A seção sticky
-  nunca recebe `transform` nem `filter`: criaria containing block e o sticky
-  passa a se comportar diferente entre navegadores.
-- **O último capítulo não é coberto**: ele é `position: relative`, não sticky,
-  e o rodapé vem depois dele em fluxo normal.
-- `prefers-reduced-motion`: **só a troca de cor**. Sem scale, sem brightness,
-  sem radius. Implementado com `gsap.matchMedia()`.
-- `<meta name="theme-color">` acompanha o `bg` do capítulo ativo
-  (`ThemeColorSync`).
-- **ProgressRail**: 7 traços na cor de acento do capítulo ativo, clicáveis.
-  Vertical à direita no desktop, horizontal no topo no mobile. Cada traço é um
-  alvo de toque de 28px, ainda que o risco visível tenha 3px. Os traços levam
-  uma `drop-shadow` discreta porque a cor é a do capítulo **ativo**, mas quem
-  passa por trás durante a transição é o **anterior** — sem a sombra, acento
-  branco sobre capítulo claro some.
+Reescrita em 29/09 depois de várias rodadas com o Leandro olhando em três telas
+(27", notebook e iPhone X). **Duas mecânicas, decididas por uma media query só**
+— o `DECK` exportado de `ChapterStack.tsx`, repetido no `globals.css`:
+`(min-width: 1024px) and (min-height: 640px) and (prefers-reduced-motion: no-preference)`.
+
+> Os textos dos capítulos mais abaixo ainda citam ScrollTrigger, marcos,
+> `top top` e scrub em alguns pontos. **Hoje toda animação de capítulo dispara
+> por `useAoAtivar(id, cb)`** — "toca isto quando o capítulo `id` vira o
+> ativo" —, uma vez por ativação, sem depender de rolagem contínua.
+
+### Desktop: o deck (um gesto = um capítulo)
+
+- **Sem scroll de página.** `html`/`body` com `overflow: hidden`; cada
+  `.capitulo` é uma caixa `position: fixed; inset: 0` do tamanho da tela, todas
+  empilhadas no mesmo lugar, e quem entra e sai é o `.palco` de dentro, movido
+  por GSAP em `yPercent`. A caixa fixa tem `pointer-events: none` (senão o
+  capítulo de índice maior, com o palco fora de cena, comeria o clique de
+  todos); quem recebe clique é o palco.
+- **O plugin Observer** lê roda do mouse, trackpad e toque e chama `goTo(atual
+  ± 1)`. Teclado: setas, PageUp/PageDown, espaço, Home/End (ignorado dentro de
+  campo de texto — o crachá do 03 tem um input). Uma trava de 0,85s + 0,35s
+  absorve a inércia do trackpad.
+- **Empilhamento = ordem do documento** (`z-index` = índice). Indo pra frente,
+  quem entra sobe por cima; voltando, quem sai desce por cima e desencobre o de
+  baixo. Quem fica coberto encolhe (`scale 0.92`), arredonda (28px) e escurece
+  pela camada `.dim` (opacidade 0 → 0.55) — **nunca `filter` animado**.
+- **O rodapé é o passo `n`** (um depois da Santo Visu): no deck ele é uma
+  folha `fixed` presa no pé da tela que sobe com mais um gesto e desce no
+  gesto contrário. Links de âncora (`#fortix`...) em qualquer lugar — o índice
+  do rodapé, principalmente — viram `goTo` no deck.
+- **`goTo` é exposto por contexto** (`useCapituloAtivo().ir`): índice do hero,
+  selo "Próximo evento" e rail chamam ele. Fora do deck o mesmo `ir` faz
+  `scrollIntoView` suave. **Pegadinha resolvida:** `irRef.current =
+  irPorScroll` tem que vir ANTES do `mm.add(DECK…)`, porque o matchMedia roda o
+  callback na hora e troca pelo `goTo`.
+- **Aviso `[deck]` no console** quando conteúdo de um capítulo passa da tela
+  (roda no load e a cada resize, nos dois modos). Mede texto/botão/campo/foto
+  visíveis e os filhos em fluxo do palco (o contador do 01 é `aria-hidden` e
+  precisava entrar); ignora decoração que sangra de propósito.
+
+### Celular (e tablet, e reduced-motion): rolagem NORMAL
+
+- **Nada de sticky, nada de snap, nada cobrindo nada.** Os capítulos ficam em
+  fluxo, um depois do outro, e **podem passar de uma tela**. Pedido explícito
+  do Leandro num iPhone X: o empilhamento cortava o pé de quase todo capítulo
+  (contador do 01, "Ver o clube" do 02) e a transição por slide não serve.
+- **scroll-snap de página foi tentado duas vezes e descartado nas duas.** Não
+  tentar de novo.
+- **Capítulo ativo por IntersectionObserver** com `rootMargin: "-49% 0px"`
+  (uma linha no meio da tela). Com os capítulos em fluxo só um cruza por vez,
+  e o rail acompanha nos dois sentidos — com o sticky antigo os de cima
+  ficavam presos na tela e a barra não acompanhava a subida.
+- Efeitos leves continuam, via `useAoAtivar`: crachá balança, listras entram,
+  citação acende, TV liga, selo gira. **A foto da Santo Visu fica parada** (a
+  entrada lateral só existe no deck e só com 2+ fotos: no celular ela pulava
+  com a foto já na tela).
+
+### Sempre
+
+- **Nunca `scroll-behavior: smooth` no `html`**; quem quer suavidade chama
+  `scrollIntoView`, checando `prefers-reduced-motion`.
+- Anima só `transform`, `opacity` e `border-radius`. **Nada de `filter`,
+  `backdrop-filter` ou `mix-blend-mode` animados.**
+- `<meta name="theme-color">` acompanha o capítulo ativo (`ThemeColorSync`).
+- **ProgressRail**: 7 traços na cor de acento do capítulo ativo, clicáveis,
+  alvo de toque de 28px. Vertical à direita no desktop, horizontal no topo no
+  celular.
+- `Chapter` ainda devolve **marco** (div de altura zero, dono do `id` de
+  âncora) + seção. No deck o marco some; fora dele é o alvo das âncoras.
 
 ## Temas
 
@@ -639,8 +635,10 @@ usa `<Chapter>`: não é capítulo, é o fim da página.
   repetição e não é: com o caminho vindo de variável o Turbopack desiste da
   análise estática e traça **o projeto inteiro** pra dentro do bundle do
   servidor, `public/` junto. O aviso dele é literal.
-- Fonte e foto moram **fora de `public/`**: são lidas no build e não são
-  servidas pra ninguém.
+- Fonte e foto moram em **`recursos/`**, fora de `public/`: são lidas no build
+  e não são servidas pra ninguém. **Têm que estar versionadas** — moravam em
+  `assets-originais/`, que está no `.gitignore`, e o build pelo Git da Vercel
+  falhava.
 - **`noindex` não atrapalha o preview.** `noindex` fala com buscador; quem monta
   o cartão é o crawler da rede social, que lê a Open Graph. Dá pra ter preview
   bonito e continuar fora do Google.
@@ -725,9 +723,16 @@ Escala com `clamp()`. Nada de `px` fixo em título.
 A qualidade do material é **irregular** — metade é print de Instagram. Por isso:
 
 - Toda foto de capítulo passa pelo **`TreatedImage`**: duotone na cor do
-  capítulo (foto em preto e branco + duas camadas de cor em `mix-blend-mode`,
-  `lighten` pras sombras e `multiply` pras luzes), granulação por SVG noise e
-  vinheta leve. `tratar={false}` desliga tudo em foto boa.
+  capítulo e vinheta leve. `tratar={false}` desliga tudo em foto boa.
+- **O duotone é ASSADO no arquivo** (29/09). Era feito ao vivo com `filter` +
+  duas camadas em `mix-blend-mode` + grão em `overlay`, recomposto a cada
+  quadro de rolagem — o site travava no iPhone X. Agora `npm run imagens`
+  (`scripts/optimize-images.mjs`) gera `<nome>-duo.webp` com a mesma conta, e
+  **as cores e a força de cada foto moram em `lib/duotone.json`**, que o
+  `TreatedImage` também lê. Foto tratada fora do JSON aparece crua, só com a
+  vinheta (é o caso da Santo Visu, sem duotone de propósito). **Foto nova com
+  tratamento = uma linha no JSON + `npm run imagens`.**
+- **Grão:** uma camada única do site, fixa, só no desktop (`body::after`).
 - **Nunca exibir foto maior que a resolução real dela.** `TreatedImage` limita
   o quadro a `maxWidth: larguraReal` por padrão. Foto pequena: usar menor, em
   recorte, ou como fundo desfocado (`modo="fundo"`) com tratamento forte.
@@ -828,7 +833,9 @@ imagens`.
 | Favicon | `app/icon.tsx` |
 | UTM e eventos de clique | `lib/rastreio.ts` |
 | Título, descrição e robots | `app/layout.tsx` |
-| Respiro e `--top` dos capítulos altos | `app/components/ChapterStack.tsx` |
+| Cores e força do duotone de cada foto | `lib/duotone.json` → `npm run imagens` |
+| Fontes e foto do OG/favicon (versionadas) | `recursos/` (regerar: `scripts/fonte-og.mjs`, `scripts/og-foto.mjs`) |
+| Media query do deck, `goTo`, `useAoAtivar` | `app/components/ChapterStack.tsx` |
 | Pendências | `TODO.md` |
 
 <!-- BEGIN:nextjs-agent-rules -->
