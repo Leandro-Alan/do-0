@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import TreatedImage from "./TreatedImage";
-import { useAoAtivar } from "./ChapterStack";
+import { DECK, useAoAtivar } from "./ChapterStack";
 import type { Foto } from "@/lib/chapters";
 
 /**
@@ -36,6 +36,11 @@ import type { Foto } from "@/lib/chapters";
  * deixou de existir: agora cada faixa entra de um lado, UMA vez, quando a
  * Barbearia vira o capitulo ativo (`useAoAtivar`) — mesma direção alternada
  * entre faixas, sem depender de rolagem continua.
+ *
+ * **Essa entrada so existe no deck, e so com faixas.** No celular a rolagem e
+ * normal e o capitulo vira ativo quando ja esta no meio da tela: a foto,
+ * visivel, era jogada de lado e voltava — um tranco que o Leandro viu como
+ * bug. E com UMA foto ela fica parada sempre, como diz o topo deste arquivo.
  */
 export default function MosaicoBarbearia({
   fotos,
@@ -52,7 +57,7 @@ export default function MosaicoBarbearia({
 
   useAoAtivar("barbearia", () => {
     const el = raiz.current;
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || modo === "unica" || !window.matchMedia(DECK).matches) return;
 
     const faixas = [...el.querySelectorAll<HTMLElement>("[data-faixa]")];
     if (faixas.length === 0) return;

@@ -26,7 +26,7 @@ const OPACIDADE_DIM = 0.55;
  * verdade), e tambem decide qual CSS vale — o `globals.css` tem que repetir
  * estes tres numeros (1024, 640) se um dia mudarem aqui.
  */
-const DECK = "(min-width: 1024px) and (min-height: 640px) and (prefers-reduced-motion: no-preference)";
+export const DECK = "(min-width: 1024px) and (min-height: 640px) and (prefers-reduced-motion: no-preference)";
 
 type ContextoAtivo = { ativo: number; ir: (indice: number) => void };
 const ContextoCapituloAtivo = createContext<ContextoAtivo>({ ativo: 0, ir: () => {} });
