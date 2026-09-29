@@ -123,16 +123,16 @@ export default function ChapterStack({ children }: { children: ReactNode }) {
     checarCaber();
 
     /* ------------------------------------------------------------------
-       MOBILE / TABLET / reduced-motion: scroll de verdade, snap nativo.
-       Cada capitulo e 100svh no CSS (globals.css cuida disso) — aqui so
-       falta saber QUAL esta ativo, pra alimentar o rail e o theme-color.
+       MOBILE / TABLET / reduced-motion: rolagem NORMAL, um capitulo depois
+       do outro em fluxo. Aqui so falta saber QUAL esta ativo, pra alimentar o
+       rail e o theme-color.
 
        IntersectionObserver com rootMargin negativo dos dois lados ("-49%")
-       cria uma LINHA fina no meio exato da tela: so o capitulo que cruza
-       essa linha entra em interseccao. Como o snap garante que sempre ha
-       exatamente um capitulo ocupando a tela inteira, nunca ha ambiguidade
-       — ao contrario da conta antiga baseada em posicao de scroll, que
-       depedia de --respiro e virava alvo movel no celular.
+       cria uma LINHA fina no meio exato da tela: o capitulo que cruza essa
+       linha e o ativo. Com os capitulos em fluxo so um cruza por vez, nos dois
+       sentidos da rolagem. (Com o empilhamento sticky antigo os capitulos de
+       cima ficavam presos na tela por baixo dos outros, cruzando a linha pra
+       sempre, e a barra nao acompanhava a volta.)
        ------------------------------------------------------------------ */
     const io = new IntersectionObserver(
       (entradas) => {

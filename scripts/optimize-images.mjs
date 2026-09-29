@@ -36,10 +36,7 @@ const kb = (bytes) => (bytes / 1024).toFixed(0) + "KB";
 
 const originais = varrer(publico).sort();
 
-if (originais.length === 0) {
-  console.log("Nada a converter: /public nao tem JPG nem PNG.");
-  process.exit(0);
-}
+if (originais.length === 0) console.log("Nada a converter: /public nao tem JPG nem PNG.");
 
 let convertidos = 0;
 let pulados = 0;
@@ -90,3 +87,49 @@ console.log(
   `\n${convertidos} convertido(s), ${pulados} ja estava(m) pronto(s).` +
     `\nOriginais em assets-originais/ (fora de /public, nao vao pro bundle).`
 );
+
+/* ------------------------------------------------------------------------
+   DUOTONE ASSADO. O tratamento das fotos era feito ao vivo no navegador: a
+   foto em cinza por `filter` e duas camadas de cor em `mix-blend-mode` por
+   cima (lighten pras sombras, multiply pras luzes), mais o grao em
+   `overlay`. No celular isso e recomposto a cada quadro de rolagem, e o
+   Leandro sentiu o site travando num iPhone X. Aqui a MESMA conta roda uma
+   vez, com sharp, e sai um `<nome>-duo.webp` pronto — o TreatedImage so
+   mostra o arquivo.
+
+   As cores e a forca de cada foto vem de `lib/duotone.json`, que o
+   TreatedImage tambem le: um lugar so. Foto nova com tratamento = uma linha
+   la + `npm run imagens`.
+
+   Sempre regera (e rapido, e mudar a cor no JSON tem que valer na hora).
+   ------------------------------------------------------------------------ */
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const duotone = JSON.parse(fs.readFileSync(path.join(raiz, "lib/duotone.json"), "utf8"));
+
+for (const [src, { escuro, claro, forca }] of Object.entries(duotone)) {
+  const entrada = path.join(publico, src);
+  if (!fs.existsSync(entrada)) {
+    console.log(`! ${src} nao existe em public/; pulando o duotone`);
+    continue;
+  }
+  const saida = entrada.replace(/\.webp$/i, "-duo.webp");
+  const E = hex(escuro);
+  const C = hex(claro);
+  const { data, info } = await sharp(entrada).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+  for (let i = 0; i < data.length; i += 3) {
+    // 1. cinza com o mesmo contraste e brilho que o CSS usava
+    const cinza = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    const ajustado = Math.min(255, Math.max(0, ((cinza / 255 - 0.5) * 1.08 + 0.5) * 1.02 * 255));
+    for (let c = 0; c < 3; c++) {
+      // 2. sombra em `lighten`, na opacidade `forca`
+      const comSombra = ajustado + (Math.max(ajustado, E[c]) - ajustado) * forca;
+      // 3. luz em `multiply`, na opacidade `forca`
+      const comLuz = comSombra + ((comSombra * C[c]) / 255 - comSombra) * forca;
+      data[i + c] = Math.round(Math.min(255, Math.max(0, comLuz)));
+    }
+  }
+
+  await sharp(data, { raw: info }).webp({ quality: 80, effort: 5 }).toFile(saida);
+  console.log(`~ ${src.padEnd(30)} -> ${path.basename(saida)}  (${escuro} / ${claro} a ${forca})`);
+}

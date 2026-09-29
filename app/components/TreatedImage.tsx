@@ -1,12 +1,22 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
+import duotone from "@/lib/duotone.json";
 
 /**
  * Toda foto de capitulo passa por aqui.
  *
  * O material do Andre e irregular (metade e print de Instagram, de 640px). O
  * tratamento serve pra que fotos de qualidades diferentes pareçam da mesma
- * familia: duotone nos tons do capitulo, granulacao e vinheta.
+ * familia: duotone nos tons do capitulo e vinheta.
+ *
+ * O DUOTONE E ASSADO NO ARQUIVO. Era feito ao vivo (foto em cinza por
+ * `filter` + duas camadas em `mix-blend-mode` + grao em `overlay`), e no
+ * celular isso era recomposto a cada quadro de rolagem — o site travava num
+ * iPhone X. Agora `npm run imagens` gera `<nome>-duo.webp` com a mesma conta,
+ * e as cores e a forca de cada foto moram em `lib/duotone.json`. Foto
+ * tratada que nao esta la aparece crua, so com a vinheta: e o caso da Santo
+ * Visu, que nao leva duotone de proposito. O grao virou uma camada unica do
+ * site, so no desktop (globals.css).
  *
  * Duas regras sao estruturais, nao decorativas:
  *   - `tratar={false}` em foto boa ou em arte pronta (flyer, logo). Tratar uma
@@ -51,10 +61,13 @@ export default function TreatedImage({
   /** vai por cima das camadas de tratamento (degrade, texto sobreposto). */
   children?: ReactNode;
 }) {
-  const estilo = {
-    "--duo-forca": forca,
-    ...(modo === "foto" ? { maxWidth: `${largura}px` } : null),
-  } as CSSProperties;
+  // `forca` fica na assinatura por compatibilidade com quem chama: quem manda
+  // agora e o `lib/duotone.json`, lido pelo script que assa o arquivo.
+  void forca;
+  const assada = tratar && src in duotone;
+  const arquivo = assada ? src.replace(/\.webp$/i, "-duo.webp") : src;
+
+  const estilo = (modo === "foto" ? { maxWidth: `${largura}px` } : {}) as CSSProperties;
 
   return (
     <figure
@@ -70,7 +83,7 @@ export default function TreatedImage({
       style={estilo}
     >
       <Image
-        src={src}
+        src={arquivo}
         alt={alt}
         width={largura}
         height={altura}
@@ -80,31 +93,9 @@ export default function TreatedImage({
         aria-hidden={modo === "fundo" ? true : undefined}
       />
 
-      {tratar && (
-        <>
-          <span className="tratada-camada tratada-sombra" aria-hidden="true" />
-          <span className="tratada-camada tratada-luz" aria-hidden="true" />
-          <span
-            className="tratada-camada tratada-grao"
-            aria-hidden="true"
-            style={{ "--grao": `url("${GRAO}")` } as CSSProperties}
-          />
-          <span className="tratada-camada tratada-vinheta" aria-hidden="true" />
-        </>
-      )}
+      {tratar && <span className="tratada-camada tratada-vinheta" aria-hidden="true" />}
 
       {children}
     </figure>
   );
 }
-
-/* Granulacao em SVG inline: nao custa requisicao e nao vira arquivo binario. */
-const GRAO =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180">
-      <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
-      <feColorMatrix type="saturate" values="0"/></filter>
-      <rect width="180" height="180" filter="url(#g)" opacity="0.38"/>
-    </svg>`.replace(/\s+/g, " ")
-  );
