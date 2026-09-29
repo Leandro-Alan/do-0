@@ -1,0 +1,2673 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: var(--font-archivo);
+  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------------------------------------------------------------- base --- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  /* NUNCA por `scroll-behavior: smooth` aqui. O ScrollTrigger rola a pagina
+     sozinho pra remedir (refresh), e com smooth global esse pulo vira
+     animacao: clicar no indice fazia a pagina subir ate o topo antes de
+     descer pro capitulo. Quem precisa de suavidade chama scrollIntoView. */
+  scroll-behavior: auto;
+
+  /* NAO por scroll-snap aqui. Tentado em 29/09 e revertido no mesmo dia:
+     `scroll-snap-stop: always` com `mandatory` prende a rolagem no topo de
+     cada capitulo, e capitulo mais alto que a tela (Cursos e palestras, o mais
+     alto do site) deixa de poder ser rolado ate o fim — fica literalmente
+     cortado. E o rodape, que nao e alvo de snap, vira inalcancavel. O
+     "assentar" que o Leandro pediu vem do --respiro, no ChapterStack, nao
+     daqui. */
+}
+
+/* `clip` e nao `hidden`: `hidden` cria um container de scroll e mata o
+   position:sticky de todos os capitulos. */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+body {
+  /* o breu do hero e o fundo que aparece em volta do capitulo encolhido */
+  background: #0d0c0a;
+  color: #f1ebdf;
+  font-family: var(--font-archivo), system-ui, -apple-system, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* --------------------------------------------------------- empilhamento --- */
+
+.pilha {
+  position: relative;
+}
+
+/* Altura zero, em fluxo normal, logo antes de cada capitulo. E ELE que o
+   ScrollTrigger mede: medir a secao sticky devolve posicao errada. */
+.marco {
+  height: 0;
+  pointer-events: none;
+}
+
+.capitulo {
+  position: sticky;
+  /* negativo quando o capitulo e mais alto que a tela; ChapterStack calcula */
+  top: var(--top, 0px);
+  /* Espaco de rolagem DEPOIS do capitulo, so quando ele nao cabe na tela.
+     Empurra o proximo pra baixo sem mexer no que esta pintado: durante ele o
+     capitulo fica grudado e inteiro, e da pra ler o pe. Zero em tela alta, onde
+     todo capitulo cabe em 1,00 — ver a conta em ChapterStack.tsx. */
+  margin-bottom: var(--respiro, 0px);
+  display: flex;
+  min-height: 100vh;
+  min-height: 100svh;
+  /* fundo transparente de proposito: quem pinta e o .palco, pra que o breu do
+     body apareca em volta quando o palco encolhe */
+  background: transparent;
+  color: var(--fg);
+}
+
+/* o ultimo capitulo nao e coberto por ninguem: sai do sticky e vai embora
+   normalmente, com o rodape atras */
+.capitulo--ultimo {
+  position: relative;
+  top: auto;
+}
+
+.palco {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  transform-origin: 50% 50%;
+}
+
+/* O `position: relative; z-index: 2` nao e decoracao: elemento posicionado
+   (uma cordilheira, uma listra, um cracha) pinta por cima de elemento SEM
+   posicao por mais baixo que seja o z-index dele. Sem isso, o que entra pelo
+   slot `midia` tapa os CTAs. Ja foi descoberto tres vezes — 01, 02 e 03 —,
+   entao subiu pro esqueleto e cada capitulo parou de reescrever. */
+.palco-conteudo {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 1.75rem);
+  padding: clamp(5rem, 12vh, 8rem) var(--gutter) clamp(2rem, 6vh, 4rem);
+}
+
+:root {
+  --gutter: clamp(1.25rem, 6vw, 5rem);
+}
+
+/* ---------------------------------------------------------- tipografia --- */
+
+.etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: clamp(0.688rem, 2.6vw, 0.813rem);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.etiqueta b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.titulo {
+  font-size: clamp(2.75rem, 13vw, 8.5rem);
+  font-weight: 800;
+  /* o eixo wdth do Archivo. font-stretch e nao font-variation-settings:
+     os dois juntos brigam com o font-weight. */
+  font-stretch: var(--titulo-wdth, 100%);
+  line-height: 0.9;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: var(--fg);
+}
+
+.subtitulo {
+  max-width: 34ch;
+  font-size: clamp(1rem, 4.2vw, 1.375rem);
+  line-height: 1.45;
+  text-wrap: pretty;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------ elementos --- */
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 1.25rem;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: transform 0.18s var(--ease-saida), filter 0.18s var(--ease-saida);
+}
+
+.cta:active {
+  transform: scale(0.975);
+  filter: brightness(0.92);
+}
+
+.cta svg {
+  flex: none;
+  transition: transform 0.24s var(--ease-saida);
+}
+
+.cta:hover svg {
+  transform: translateX(3px);
+}
+
+.cta--secundario {
+  background: transparent;
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--fg) 34%, transparent);
+}
+
+.cta--secundario:active {
+  filter: none;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+@media (min-width: 640px) {
+  .cta {
+    width: auto;
+    min-width: 15rem;
+  }
+}
+
+.prova-numero {
+  display: block;
+  font-size: clamp(2.25rem, 9vw, 3.75rem);
+  font-weight: 800;
+  font-stretch: 88%;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+
+.prova-rotulo {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: clamp(0.75rem, 3vw, 0.875rem);
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------- TreatedImage --- */
+
+.tratada {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  border-radius: 16px;
+}
+
+.tratada img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tratada--tratada img {
+  filter: grayscale(1) contrast(1.08) brightness(1.02);
+}
+
+.tratada--fundo,
+.tratada--capa {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+
+.tratada--fundo img,
+.tratada--capa img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tratada--fundo.tratada--tratada img {
+  filter: grayscale(1) contrast(1.1) blur(14px);
+  transform: scale(1.1); /* esconde a borda que o blur deixa transparente */
+}
+
+.tratada-camada {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* sombras da foto viram o tom escuro do capitulo */
+.tratada-sombra {
+  background: var(--duo-escuro);
+  mix-blend-mode: lighten;
+  opacity: var(--duo-forca, 0.82);
+}
+
+/* luzes viram o tom claro */
+.tratada-luz {
+  background: var(--duo-claro);
+  mix-blend-mode: multiply;
+  opacity: var(--duo-forca, 0.82);
+}
+
+.tratada-grao {
+  background-image: var(--grao);
+  background-size: 180px 180px;
+  mix-blend-mode: overlay;
+  opacity: 0.5;
+}
+
+.tratada-vinheta {
+  background: radial-gradient(
+    120% 90% at 50% 45%,
+    transparent 42%,
+    color-mix(in srgb, var(--duo-escuro) 70%, transparent) 100%
+  );
+}
+
+/* --------------------------------------------------------- hero (00) --- */
+
+/* Duas faixas no celular: foto em cima, corpo embaixo. No desktop vira duas
+   colunas e a foto sangra ate a borda esquerda. */
+.hero {
+  display: grid;
+  flex: 1;
+  grid-template-areas: "foto" "texto";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 45svh auto;
+}
+
+.hero-foto {
+  position: relative;
+  grid-area: foto;
+  overflow: hidden;
+}
+
+/* o degrade forte existe porque nao ha recorte sem fundo do Andre: e ele que
+   costura a foto no breu do capitulo e da chao pro nome */
+.hero-degrade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--bg) 2%,
+    color-mix(in srgb, var(--bg) 78%, transparent) 26%,
+    color-mix(in srgb, var(--bg) 22%, transparent) 62%,
+    transparent 88%
+  );
+}
+
+.hero-corpo {
+  position: relative;
+  z-index: 2;
+  grid-area: texto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.875rem, 3.2vw, 1.25rem);
+  padding: clamp(0.5rem, 2vw, 1rem) var(--gutter) clamp(2rem, 6vh, 3.5rem);
+}
+
+/* No celular o nome sai do fluxo e encosta na base da foto (bottom: 100% poe a
+   base dele na borda de cima do corpo). No desktop volta a ser item normal. */
+.hero-nome {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: 0 var(--gutter) clamp(0.5rem, 2vh, 0.875rem);
+  font-size: clamp(3rem, 15vw, 5.5rem);
+  font-weight: 800;
+  font-stretch: var(--titulo-wdth, 100%);
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+/* mascara de revelacao: o vao extra em cima evita que o acento do "é" corte */
+.hero-linha {
+  display: block;
+  overflow: hidden;
+  padding-top: 0.1em;
+  margin-top: -0.1em;
+}
+
+.hero-linha > span {
+  display: block;
+}
+
+.hero-assinatura {
+  font-size: clamp(0.813rem, 3.2vw, 0.938rem);
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero-frase {
+  max-width: 32ch;
+  font-size: clamp(1rem, 4.2vw, 1.25rem);
+  line-height: 1.4;
+  text-wrap: pretty;
+  color: var(--muted);
+}
+
+.hero-selo {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 42px;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 22%, transparent);
+  font-size: clamp(0.75rem, 3.1vw, 0.875rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--fg);
+  transition: box-shadow 0.22s var(--ease-saida);
+}
+
+.hero-selo:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 45%, transparent);
+}
+
+.hero-selo-sep {
+  color: var(--muted);
+}
+
+.hero-pulso {
+  position: relative;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--pulso);
+}
+
+.hero-pulso::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--pulso);
+  animation: pulso 2.1s ease-out infinite;
+}
+
+@keyframes pulso {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  70%,
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------- indice --- */
+
+.indice {
+  display: flex;
+  flex-direction: column;
+  margin-top: clamp(0.25rem, 1.5vw, 0.75rem);
+}
+
+.indice-linha {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 56px;
+  padding: 0.5rem 0.7rem;
+  margin-inline: -0.7rem;
+  border-radius: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--fg) 13%, transparent);
+  color: var(--fg);
+  transition: background-color 0.22s var(--ease-saida), color 0.22s var(--ease-saida);
+}
+
+.indice-linha:first-child {
+  border-top: 0;
+}
+
+/* so em quem tem mouse: no toque o :hover fica grudado depois do clique */
+@media (hover: hover) {
+  .indice-linha:hover {
+    background: var(--linha-bg);
+    color: var(--linha-fg);
+  }
+}
+
+.indice-linha:active {
+  background: var(--linha-bg);
+  color: var(--linha-fg);
+}
+
+.indice-num {
+  font-size: 0.813rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, currentColor 52%, transparent);
+}
+
+.indice-nome {
+  font-size: clamp(1.063rem, 4.4vw, 1.313rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.indice-cat {
+  font-size: 0.688rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: color-mix(in srgb, currentColor 58%, transparent);
+}
+
+/* amostra da cor de fundo do capitulo. O anel existe porque metade das
+   amostras e quase preta sobre um hero quase preto. */
+.indice-cor {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--linha-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 34%, transparent);
+}
+
+/* o rail ocupa o topo no celular, entao o icone desce pra nao brigar com ele */
+.hero-ig {
+  position: absolute;
+  top: calc(max(0.75rem, env(safe-area-inset-top)) + 2.6rem);
+  right: var(--gutter);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 24%, transparent);
+  transition: background-color 0.22s var(--ease-saida);
+}
+
+.hero-ig:hover {
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+}
+
+@media (min-width: 900px) {
+  .hero {
+    grid-template-areas: "foto texto";
+    grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .hero-corpo {
+    justify-content: center;
+    gap: clamp(1rem, 1.6vh, 1.5rem);
+    padding: clamp(4rem, 9vh, 7rem) var(--gutter) clamp(3rem, 8vh, 5rem)
+      clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .hero-nome {
+    position: static;
+    padding: 0;
+    font-size: clamp(3.5rem, 6.2vw, 6rem);
+  }
+
+  /* no desktop a foto sangra na esquerda e o degrade costura na direita */
+  .hero-degrade {
+    background: linear-gradient(
+      to right,
+      transparent 40%,
+      color-mix(in srgb, var(--bg) 35%, transparent) 72%,
+      var(--bg) 99%
+    );
+  }
+
+  .hero-ig {
+    top: 1.75rem;
+  }
+}
+
+
+/* -------------------------------------------- hero em tela BAIXA e larga ---
+
+   Notebook: 1366x768, 1536x864. Largo o bastante pro layout de duas colunas,
+   baixo demais pro respiro que o desktop grande usa — ali o hero dava 840 numa
+   tela de 768, e as duas ultimas linhas do indice (YouTube e Santo Visu)
+   ficavam abaixo da dobra. O respiro do ChapterStack ja tornou elas
+   ALCANCAVEIS; este bloco faz o hero CABER, que e melhor ainda: o indice e a
+   razao de ser da capa, e ele tem que ser lido de uma vez.
+
+   Por que uma media query de ALTURA em vez de baixar os clamp: a 1440 de
+   altura os respiros do desktop ja estao no teto do clamp (112px e 80px).
+   Baixar o coeficiente em vh encolheria a tela de 27 polegadas junto, e la
+   esta do jeito que o Leandro quer. Altura e a variavel certa porque o
+   problema e de altura.
+
+   O corte e 899px pra deixar 900 — a tela de referencia do desktop —
+   intocada. Medido: 840 vira 764 numa tela de 768, e 875 vira 812 numa de
+   864. */
+@media (min-width: 900px) and (max-height: 899px) {
+  .hero-corpo {
+    gap: clamp(0.625rem, 1.4vh, 0.875rem);
+    padding: clamp(2rem, 5.2vh, 3.25rem) var(--gutter) clamp(1.75rem, 4.4vh, 2.75rem)
+      clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .hero-nome {
+    font-size: clamp(3rem, 5.4vw, 4.75rem);
+  }
+}
+
+/* ------------------------------------------- capitulo 01 Barbers Vale --- */
+
+/* Tudo daqui e escopado por [data-id]: o capitulo veste o esqueleto padrao do
+   <Chapter> e so ajusta o que e dele. Nenhuma outra secao enxerga isto. */
+
+[data-id="barbersvale"] .palco-conteudo {
+  /* o empilhamento contra a cordilheira e a foto mora no esqueleto agora */
+  /* abre espaco pra faixa da foto no topo, no celular */
+  padding-top: 34svh;
+  gap: clamp(0.75rem, 2.4vw, 1.25rem);
+}
+
+[data-id="barbersvale"] .titulo {
+  font-weight: 900;
+  font-size: clamp(3rem, 15vw, 9.5rem);
+  line-height: 0.84;
+  letter-spacing: -0.005em; /* condensado ja aperta: tracking negativo colide */
+}
+
+/* a marca do logo entra como MASCARA: o arquivo e branco+alpha e a cor vem do
+   acento do capitulo. Mesmo arranjo do selo da Santo Visu. */
+[data-id="barbersvale"] .bv-marca {
+  display: block;
+  width: clamp(44px, 12vw, 64px);
+  aspect-ratio: 491 / 350;
+  margin-bottom: clamp(0.5rem, 2vw, 0.875rem);
+  background: var(--accent);
+  mask-image: url("/marca/barbersvale-marca.webp");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: left center;
+  -webkit-mask-image: url("/marca/barbersvale-marca.webp");
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: left center;
+}
+
+[data-id="barbersvale"] .bv-edicao {
+  display: block;
+  margin-top: clamp(0.5rem, 2vw, 0.875rem);
+  font-size: clamp(0.813rem, 3.4vw, 1.125rem);
+  font-weight: 600;
+  font-stretch: 100%;
+  /* o respiro e o ponto: contraste com o titulo condensado e esmagado */
+  letter-spacing: 0.42em;
+  line-height: 1.2;
+  color: var(--accent);
+}
+
+[data-id="barbersvale"] .bv-fatos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-top: 0.75rem;
+  font-size: clamp(0.813rem, 3.2vw, 0.938rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+}
+
+/* cada fato e indivisivel: "Teatro Ariano Suassuna" nao pode quebrar no meio */
+[data-id="barbersvale"] .bv-fato {
+  white-space: nowrap;
+}
+
+[data-id="barbersvale"] .bv-fatos-sep {
+  margin: 0 0.5em;
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------ fundo e pulso --- */
+
+[data-id="barbersvale"] .bv-fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+[data-id="barbersvale"] .bv-serra {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 62%;
+}
+
+/* os planos nascem do proprio par bg/acento da secao: trocar a paleta do
+   capitulo troca a cordilheira junto */
+[data-id="barbersvale"] .bv-plano--longe {
+  fill: color-mix(in srgb, var(--accent) 7%, var(--bg));
+}
+
+[data-id="barbersvale"] .bv-plano--meio {
+  fill: color-mix(in srgb, var(--accent) 12%, var(--bg));
+}
+
+[data-id="barbersvale"] .bv-plano--perto {
+  fill: color-mix(in srgb, var(--accent) 19%, var(--bg));
+}
+
+/* altura vem do viewBox (1440x240), nao de um valor fixo: assim a escala e
+   uniforme e o dashoffset do desenho continua batendo com getTotalLength() */
+[data-id="barbersvale"] .bv-pulso {
+  position: absolute;
+  inset: 50% 0 auto 0;
+  width: 100%;
+  height: auto;
+  translate: 0 -50%;
+}
+
+/* a espessura esta em unidades do viewBox (1440 de largura), entao ela encolhe
+   junto com a tela: 9 da ~2,4px no celular e 9px no desktop, que e o peso do
+   traco da propria marca */
+[data-id="barbersvale"] .bv-pulso-traco {
+  stroke: var(--accent);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+}
+
+/* ---------------------------------------------------------------- foto --- */
+
+/* A foto SOME por mascara, nao por camada opaca em cima. Cobrir com um
+   degrade ate o fundo escondia a cordilheira que passa por tras e o corte
+   aparecia como uma parede vertical no desktop; mascarando, a serra atravessa
+   inteira e a foto se dissolve nela. */
+[data-id="barbersvale"] .bv-foto {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 1;
+  height: 38svh;
+  mask-image: linear-gradient(to bottom, #000 42%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 42%, transparent 100%);
+}
+
+/* so escurece o que sobrou, pra nada de texto encostar em foto clara */
+[data-id="barbersvale"] .bv-foto-degrade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg) 62%, transparent) 10%,
+    transparent 70%
+  );
+}
+
+/* ------------------------------------------------------------ contagem --- */
+
+[data-id="barbersvale"] .bv-contagem {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: clamp(1rem, 5vw, 2.25rem);
+  padding: clamp(0.875rem, 3vw, 1.25rem) var(--gutter) clamp(1.25rem, 4vh, 2rem);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+[data-id="barbersvale"] .bv-hoje {
+  font-size: clamp(1.5rem, 7vw, 2.5rem);
+  font-weight: 900;
+  font-stretch: 78%;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+}
+
+[data-id="barbersvale"] .bv-relogio {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.875rem, 4.5vw, 2rem);
+}
+
+[data-id="barbersvale"] .bv-grupo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+[data-id="barbersvale"] .bv-digitos {
+  display: flex;
+  gap: 1px;
+}
+
+/* a janela do flip: o digito que sai sobe, o que entra vem de baixo */
+[data-id="barbersvale"] .bv-digito {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 1ch;
+  height: 1em;
+  font-size: clamp(1.75rem, 8vw, 2.75rem);
+  font-weight: 800;
+  font-stretch: 82%;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--fg);
+}
+
+[data-id="barbersvale"] .bv-d {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+[data-id="barbersvale"] .bv-d--novo {
+  transform: translateY(100%);
+}
+
+/* a transicao SO existe enquanto vira: ao tirar a classe, o par volta pro
+   lugar sem animar, e o proximo flip comeca limpo */
+[data-id="barbersvale"] .bv-digito.virando .bv-d {
+  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-id="barbersvale"] .bv-digito.virando .bv-d:not(.bv-d--novo) {
+  transform: translateY(-100%);
+}
+
+[data-id="barbersvale"] .bv-digito.virando .bv-d--novo {
+  transform: translateY(0);
+}
+
+[data-id="barbersvale"] .bv-unidade {
+  font-size: clamp(0.625rem, 2.6vw, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (min-width: 900px) {
+  [data-id="barbersvale"] .palco-conteudo {
+    /* a foto passa pra direita: o texto recua e para antes dela */
+    padding-top: clamp(5rem, 12vh, 8rem);
+    padding-right: 46%;
+  }
+
+  [data-id="barbersvale"] .bv-foto {
+    inset: 0 0 0 auto;
+    width: 46%;
+    height: auto;
+    mask-image: linear-gradient(to left, #000 44%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, #000 44%, transparent 100%);
+  }
+
+  [data-id="barbersvale"] .bv-foto-degrade {
+    background: linear-gradient(
+      to left,
+      transparent 30%,
+      color-mix(in srgb, var(--bg) 45%, transparent) 100%
+    );
+  }
+
+  [data-id="barbersvale"] .bv-contagem {
+    padding-right: 46%;
+  }
+}
+
+/* -------------------------------------------------- capitulo 02 Fortix --- */
+
+/* O angulo foi MEDIDO nas barras do proprio logo (script rodado sobre
+   assets-originais/marca/fortix.jpg): PCA deu 37,5 e 38,0 graus nas duas
+   maiores, e o teste de ocupacao de canto confirmou que elas DESCEM da
+   esquerda pra direita. Nao foi escolhido no olho. */
+[data-id="fortix"] {
+  --fx-angulo: 38deg;
+  /* quanto o paralelogramo das fotos inclina. Nao e o angulo literal — ver o
+     comentario em .fx-quadro. So a mao (descendo pra direita) e a do logo. */
+  --fx-inclinacao: 14%;
+}
+
+[data-id="fortix"] .palco-conteudo {
+  /* o empilhamento contra as listras mora no esqueleto agora */
+  gap: clamp(0.75rem, 2.4vw, 1.25rem);
+}
+
+[data-id="fortix"] .titulo {
+  /* expandido, peso medio, caixa alta, tracking aberto: o oposto do capitulo 01 */
+  font-weight: 500;
+  font-size: clamp(3.25rem, 17vw, 10rem);
+  line-height: 0.92;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-id="fortix"] .fx-pastilha {
+  display: inline-grid;
+  place-items: center;
+  width: clamp(72px, 19vw, 104px);
+  aspect-ratio: 1;
+  margin-bottom: clamp(0.75rem, 2.5vw, 1.125rem);
+  border-radius: 20px;
+  /* o arquivo do logo tem fundo escuro proprio; a pastilha e do mesmo tom pra
+     que a moldura pareca o logo, e nao um quadrado colado em cima dele */
+  background: var(--accent);
+  overflow: hidden;
+}
+
+[data-id="fortix"] .fx-pastilha img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+[data-id="fortix"] .fx-descritor {
+  display: block;
+  margin-top: clamp(0.5rem, 2vw, 0.875rem);
+  font-size: clamp(0.813rem, 3.4vw, 1.063rem);
+  font-weight: 600;
+  font-stretch: 100%;
+  letter-spacing: 0.12em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+[data-id="fortix"] .subtitulo {
+  max-width: 24ch;
+  font-size: clamp(1.25rem, 5.6vw, 1.875rem);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+
+[data-id="fortix"] .fx-texto {
+  display: block;
+  max-width: 44ch;
+  margin-top: 0.75rem;
+  font-size: clamp(0.938rem, 3.8vw, 1.063rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- listras --- */
+
+[data-id="fortix"] .fx-listras {
+  position: absolute;
+  /* folga pros cantos: girado 38deg, o retangulo precisa nascer maior que a
+     secao ou as pontas aparecem dentro da tela */
+  inset: -30%;
+  z-index: 0;
+  rotate: var(--fx-angulo);
+  pointer-events: none;
+}
+
+[data-id="fortix"] .fx-listra {
+  position: absolute;
+  left: -60%;
+  width: 190%;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+}
+
+/* as tres proporcoes do logo: comprida, media e o toco curto */
+[data-id="fortix"] .fx-listra--1 {
+  top: 31%;
+  height: clamp(26px, 5.6vh, 58px);
+}
+
+[data-id="fortix"] .fx-listra--2 {
+  top: 45%;
+  width: 150%;
+  height: clamp(20px, 4.2vh, 44px);
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg));
+}
+
+/* o toco e o unico em grafite cheio: um ponto de contraste no campo claro */
+[data-id="fortix"] .fx-listra--3 {
+  top: 57%;
+  width: 92%;
+  height: clamp(14px, 3vh, 30px);
+  background: color-mix(in srgb, var(--accent) 88%, var(--bg));
+  opacity: 0.14;
+}
+
+/* --------------------------------------------------------------- galeria --- */
+
+/* Faixa arrastavel com scroll-snap NATIVO: nada de biblioteca, nada de
+   listener de scroll. Hoje nao renderiza — a Fortix nao tem foto. */
+[data-id="fortix"] .fx-galeria {
+  position: relative;
+  z-index: 2;
+  padding-bottom: clamp(1.25rem, 4vh, 2rem);
+}
+
+[data-id="fortix"] .fx-trilho {
+  display: flex;
+  gap: clamp(0.75rem, 2.5vw, 1.25rem);
+  padding-inline: var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+[data-id="fortix"] .fx-trilho::-webkit-scrollbar {
+  display: none;
+}
+
+[data-id="fortix"] .fx-quadro {
+  position: relative;
+  flex: none;
+  width: 78vw;
+  max-width: 420px;
+  aspect-ratio: 4 / 3;
+  scroll-snap-align: start;
+  /* Paralelogramo inclinado PRA MESMA MAO das listras: as duas bordas descem
+     da esquerda pra direita, igual ao logo.
+     O angulo literal de 38deg nao cabe aqui. Uma borda a 38deg da horizontal
+     avanca altura/tan(38deg) = 1,28 x a altura; num quadro 4:3 isso da 96% da
+     largura e o paralelogramo colapsa num risco. Entao a MAO e a do logo e a
+     inclinacao e limitada a --fx-inclinacao, que e o quanto da pra cortar sem
+     comer o assunto da foto. */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--fx-inclinacao)) 0,
+    100% 100%,
+    var(--fx-inclinacao) 100%
+  );
+}
+
+[data-id="fortix"] .fx-galeria--unica .fx-trilho {
+  overflow: visible;
+}
+
+[data-id="fortix"] .fx-galeria--unica .fx-quadro {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 16 / 9;
+}
+
+@media (min-width: 900px) {
+  /* a galeria e faixa NO PE (slot `assinatura`, depois do miolo), e nao coluna
+     ao lado — entao o texto nao precisa recuar pra abrir espaco pra ela */
+  [data-id="fortix"] .fx-quadro {
+    width: 34vw;
+  }
+}
+
+/* ------------------------------------------ capitulo 03 Choque de Gestao --- */
+
+[data-id="choque"] {
+  /* comprimento do cordao. Metade dele nasce ACIMA do capitulo e morre no
+     corte do palco: e o que faz o cracha parecer pendurado em algo fora da
+     tela, em vez de comecar no ar. */
+  --cq-cordao: clamp(48px, 8vh, 72px);
+  --cq-pad: clamp(0.875rem, 3.4vw, 1.125rem);
+  /* O preto e o branco do xadrez sao os PAINEIS DO EVENTO, nao a paleta do
+     capitulo — por isso vivem aqui e nao em lib/chapters.ts. O branco e o
+     mesmo --fg; o preto e levemente azulado pra assentar no marinho. */
+  --cq-preto: #0b0c12;
+  --cq-branco: var(--fg);
+  /* lado do quadriculado: os quadrados saem com metade disso */
+  --cq-quadro: 20px;
+}
+
+/* No celular o cracha vem ANTES do miolo, em fluxo. O respiro de topo do
+   esqueleto viraria ar entre os dois, e esse ar custa caro: com ele o capitulo
+   passa de uma tela e a faixa do pe — que e o fecho do capitulo — so aparece
+   numa janela curta de rolagem, antes do capitulo seguinte cobrir. Sem ele o
+   capitulo inteiro cabe em 100svh e a faixa fica sempre na base. */
+[data-id="choque"] .palco-conteudo {
+  padding-top: clamp(1.25rem, 3.5vh, 2.25rem);
+  padding-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  gap: clamp(0.625rem, 2.6vw, 1.25rem);
+}
+
+[data-id="choque"] .titulo {
+  /* largura normal (tituloWdth 100) e o peso mais alto do site: o tom
+     institucional vem do peso, nao da largura */
+  font-weight: 900;
+  font-size: clamp(2.5rem, 12vw, 7rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+}
+
+[data-id="choque"] .subtitulo {
+  max-width: 22ch;
+  font-size: clamp(1.25rem, 5.4vw, 1.875rem);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+
+[data-id="choque"] .cq-texto {
+  display: block;
+  max-width: 40ch;
+  margin-top: 0.75rem;
+  font-size: clamp(0.938rem, 3.8vw, 1.063rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* "Garantir a vaga de <ate 24 caracteres>" nao cabe numa linha no celular: o
+   botao cresce em vez de cortar o nome de quem acabou de escrever ele. */
+[data-id="choque"] .cta {
+  height: auto;
+  padding-block: 0.875rem;
+  line-height: 1.2;
+}
+
+/* ---------------------------------------------------------------- cracha --- */
+
+[data-id="choque"] .cq-cracha {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: calc(var(--cq-cordao) * -0.5);
+  padding-inline: var(--gutter);
+  /* so o campo de nome recebe toque: o cartao nao pode roubar clique de nada */
+  pointer-events: none;
+}
+
+[data-id="choque"] .cq-pendura {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* o pivo do balanco e o ALTO DO CORDAO. Girar pelo centro do cartao pareceria
+     uma placa girando, e nao uma coisa pendurada. */
+  transform-origin: 50% 0;
+}
+
+[data-id="choque"] .cq-cordao {
+  width: clamp(13px, 3.4vw, 17px);
+  height: var(--cq-cordao);
+  /* marinho clareado, nunca branco: o rail do topo e branco e passa por aqui
+     no celular — cordao branco engoliria os tracos */
+  background: color-mix(in srgb, var(--fg) 26%, var(--bg));
+}
+
+[data-id="choque"] .cq-presilha {
+  z-index: 1;
+  width: clamp(30px, 8vw, 38px);
+  height: 14px;
+  /* monta em cima da borda do cartao, como presilha de verdade */
+  margin-bottom: -7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--fg) 48%, var(--bg));
+}
+
+[data-id="choque"] .cq-inclina {
+  /* a inclinacao do mouse mora num no separado do balanco: os dois escrevem
+     rotacao, e no mesmo elemento um apagaria o outro */
+  transform-origin: 50% 0;
+}
+
+[data-id="choque"] .cq-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 2vw, 0.75rem);
+  /* proporcao de cracha de verdade: sempre mais alto que largo (~0,76). Largo
+     demais ele deixa de ler como cracha e vira cartao de visita. */
+  width: clamp(172px, 47vw, 204px);
+  min-height: clamp(226px, 62vw, 262px);
+  padding: var(--cq-pad);
+  padding-bottom: 0; /* a tira de xadrez encosta na borda de baixo */
+  border-radius: 12px;
+  background: var(--fg);
+  color: var(--bg);
+  box-shadow: 0 22px 44px -20px rgb(0 0 0 / 0.55);
+  overflow: hidden;
+}
+
+[data-id="choque"] .cq-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+[data-id="choque"] .cq-simbolo {
+  flex: none;
+  width: clamp(22px, 6vw, 28px);
+  height: auto;
+  color: var(--bg);
+}
+
+[data-id="choque"] .cq-marca-texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+[data-id="choque"] .cq-marca-texto b {
+  font-size: clamp(0.938rem, 3.6vw, 1.063rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+[data-id="choque"] .cq-marca-texto span {
+  margin-top: 0.3em;
+  font-size: clamp(0.688rem, 2.8vw, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  color: color-mix(in srgb, var(--bg) 66%, var(--fg));
+}
+
+[data-id="choque"] .cq-lema {
+  font-size: clamp(0.875rem, 3.4vw, 0.938rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+[data-id="choque"] .cq-campo {
+  display: block;
+  margin-top: auto;
+  padding-bottom: var(--cq-pad);
+  cursor: text;
+  pointer-events: auto;
+}
+
+[data-id="choque"] .cq-campo-rotulo {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--bg) 66%, var(--fg));
+}
+
+[data-id="choque"] .cq-campo-input {
+  display: block;
+  width: 100%;
+  padding: 0.15rem 0 0.35rem;
+  border: 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--bg) 55%, var(--fg));
+  border-radius: 0;
+  background: transparent;
+  color: var(--bg);
+  font-family: inherit;
+  /* 16px e PISO, nao escolha de estilo: abaixo disso o Safari do iPhone — que e
+     o navegador interno do Instagram — da zoom na pagina quando o campo recebe
+     foco, e o capitulo inteiro sai do lugar. Nunca reduzir. */
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+[data-id="choque"] .cq-campo-input::placeholder {
+  color: color-mix(in srgb, var(--bg) 66%, var(--fg));
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------- xadrez --- */
+
+/* Xadrez em CSS puro. Cada regua tem UMA fileira de quadrados, e o xadrez de
+   verdade nasce de duas reguas defasadas meio quadro — a de cima e a de baixo
+   da faixa, com o letreiro no meio.
+   Duas coisas que ja deram errado aqui: `repeating-conic-gradient` esta fora
+   (o navegador interno do Instagram no iOS e WebKit, e conic so chegou la no
+   Safari 16), e a receita classica de duas camadas a 45 graus tambem — numa
+   tira de uma fileira so ela corta os triangulos no meio e sai diagonal, nao
+   quadrada. Uma faixa horizontal simples com tile de um quadro e exata. */
+[data-id="choque"] .cq-xadrez,
+[data-id="choque"] .cq-cartao-xadrez {
+  display: block;
+  height: calc(var(--cq-quadro) / 2);
+  background-image: linear-gradient(
+    to right,
+    var(--cq-preto) 50%,
+    var(--cq-branco) 50%
+  );
+  background-size: var(--cq-quadro) 100%;
+}
+
+/* a regua de baixo entra defasada meio quadro: e o que fecha o xadrez */
+[data-id="choque"] .cq-xadrez:last-child {
+  background-position-x: calc(var(--cq-quadro) / 2);
+}
+
+/* No pe do cracha as duas fileiras vivem no MESMO elemento (nao ha um par de
+   reguas pra defasar aqui). Numa fileira so, sobre o cartao branco, o xadrez
+   leria como picote de ingresso — e o que queremos e o painel do evento. */
+[data-id="choque"] .cq-cartao-xadrez {
+  height: var(--cq-quadro);
+  background-image:
+    linear-gradient(to right, var(--cq-preto) 50%, var(--cq-branco) 50%),
+    linear-gradient(to right, var(--cq-branco) 50%, var(--cq-preto) 50%);
+  background-size: var(--cq-quadro) 50%;
+  background-repeat: repeat-x;
+  background-position: 0 0, 0 100%;
+  /* sangra ate as bordas do cartao, por cima do padding */
+  margin-inline: calc(-1 * var(--cq-pad));
+}
+
+/* --------------------------------------------------------------- faixa --- */
+
+[data-id="choque"] .cq-faixa {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+[data-id="choque"] .cq-marquee {
+  overflow: hidden;
+  background: var(--fg);
+}
+
+/* O laco fecha porque a lista vem DUPLICADA: a -50% o segundo bloco esta
+   exatamente onde o primeiro comecou. Ver FaixaLema.tsx. */
+[data-id="choque"] .cq-trilho {
+  display: flex;
+  width: max-content;
+  animation: cq-desliza 84s linear infinite;
+}
+
+[data-id="choque"] .cq-tira {
+  display: flex;
+  flex: none;
+  /* rede de seguranca pra tela mais larga que a tira: sem isso sobraria um vao
+     no fim da volta. Como as duas tiras sao identicas, esticar as duas junto
+     nao quebra a emenda. */
+  min-width: 100vw;
+  justify-content: space-around;
+}
+
+[data-id="choque"] .cq-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.25rem, 5vw, 2.25rem);
+  padding: 0.5rem clamp(0.625rem, 2.5vw, 1.125rem);
+  font-size: clamp(0.688rem, 2.8vw, 0.813rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--bg);
+}
+
+[data-id="choque"] .cq-ponto {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  background: var(--cq-preto);
+  rotate: 45deg;
+}
+
+@keyframes cq-desliza {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* o bloco global de reduced-motion so zera a DURACAO, e com `infinite` isso
+   deixaria o letreiro tremendo. Aqui ele para de verdade. */
+@media (prefers-reduced-motion: reduce) {
+  [data-id="choque"] .cq-trilho {
+    animation-name: none;
+  }
+}
+
+@media (min-width: 900px) {
+  [data-id="choque"] .cq-cracha {
+    position: absolute;
+    top: calc(var(--cq-cordao) * -0.35);
+    right: clamp(2rem, 6vw, 7rem);
+    left: auto;
+    justify-content: flex-end;
+    margin-top: 0;
+    padding-inline: 0;
+  }
+
+  [data-id="choque"] {
+    --cq-cordao: clamp(90px, 20vh, 180px);
+  }
+
+  [data-id="choque"] .cq-cartao {
+    width: clamp(224px, 17vw, 258px);
+    min-height: clamp(292px, 22vw, 336px);
+  }
+
+  /* no desktop o nome e o que ocupa o miolo do cracha, entao ele cresce */
+  [data-id="choque"] .cq-campo-input {
+    font-size: 1.125rem;
+  }
+
+  /* no desktop o cracha sai do fluxo e vai pra direita, entao o miolo volta a
+     ter o respiro de topo do esqueleto — e o recuo da direita e espaco de
+     verdade, nao reserva vazia: o cracha esta ali */
+  [data-id="choque"] .palco-conteudo {
+    padding-top: clamp(5rem, 12vh, 8rem);
+    padding-bottom: clamp(2rem, 6vh, 4rem);
+    padding-right: 34%;
+  }
+}
+
+/* --------------------------------------- capitulo 04 Cursos e palestras --- */
+
+[data-id="palestras"] {
+  /* a moldura da tela de projetor, em marrom cafe sobre a areia */
+  --pl-moldura: color-mix(in srgb, var(--accent) 82%, var(--fg));
+}
+
+[data-id="palestras"] .palco-conteudo {
+  padding-top: clamp(4rem, 9vh, 6rem);
+  gap: clamp(0.875rem, 2.8vw, 1.5rem);
+}
+
+[data-id="palestras"] .titulo {
+  /* largura normal com peso 500: e o que separa este capitulo do 03, que
+     tambem e normal mas vem em 900. Editorial, nao institucional. */
+  font-weight: 500;
+  font-size: clamp(2.75rem, 13vw, 7.5rem);
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+}
+
+[data-id="palestras"] .subtitulo {
+  max-width: 24ch;
+  font-size: clamp(1.25rem, 5.4vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+
+/* O bloco editorial entra pelo slot `provas`, cujo involucro e um flex com
+   wrap e gap. Com UM filho de `flex: 1 1 100%` o wrap e o gap viram inertes e
+   ele se comporta como bloco — foi o que dispensou um slot novo no esqueleto. */
+[data-id="palestras"] .pl-editorial {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 4vw, 2rem);
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- temas --- */
+
+[data-id="palestras"] .pl-temas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+[data-id="palestras"] .pl-tema {
+  padding: 0.5rem 0.875rem;
+  border-radius: 999px;
+  /* 62% e o piso medido pra borda passar 3:1 sobre a areia. A 34% ela media
+     1,63:1 e o cartao quase nao tinha contorno. */
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 62%, transparent);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  font-size: clamp(0.75rem, 3vw, 0.875rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------ tela de projetor --- */
+
+[data-id="palestras"] .pl-tela {
+  /* A SOMBRA DO DUOTONE AQUI E O ACCENT, NAO O FG. Medido lado a lado: com o
+     `--duo-escuro` da paleta (#2E1C13, quase preto) a foto sai cinza, por mais
+     que se aumente a forca — o tom claro deste capitulo e areia dessaturada e
+     nao tinge nada. Trocando so a sombra pelo marrom cafe do accent ela vira
+     cafe de verdade e mantem a profundidade. Continua tudo da paleta. */
+  --duo-escuro: var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  /* nunca passa dos 604px reais do arquivo; o TreatedImage trava de novo */
+  max-width: 604px;
+}
+
+/* a caixa do rolo, em cima do pano */
+[data-id="palestras"] .pl-tela-caixa {
+  width: 82%;
+  height: clamp(8px, 2vw, 11px);
+  border-radius: 3px 3px 1px 1px;
+  background: var(--pl-moldura);
+}
+
+[data-id="palestras"] .pl-tela-pano {
+  position: relative;
+  width: 100%;
+  /* borda fina da mesma cor da caixa, e o brilho do projetor em volta: sombra
+     larga e quente em vez de preta, pra nao sujar o campo claro */
+  box-shadow:
+    0 0 0 3px var(--pl-moldura),
+    0 18px 50px -18px color-mix(in srgb, var(--fg) 45%, transparent),
+    0 0 70px -10px color-mix(in srgb, var(--bg) 72%, transparent);
+}
+
+/* dentro da tela o canto e reto: pano de projetor nao tem canto redondo */
+[data-id="palestras"] .pl-tela-foto {
+  border-radius: 0;
+}
+
+/* o brilho POR CIMA da foto lava ela pra cor da parede — e o que faz a imagem
+   parecer projetada e nao colada. Areia do capitulo, nunca branco. */
+[data-id="palestras"] .pl-tela-brilho {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      198deg,
+      color-mix(in srgb, var(--bg) 46%, transparent) 0%,
+      transparent 44%
+    ),
+    radial-gradient(
+      120% 80% at 50% 8%,
+      color-mix(in srgb, var(--bg) 30%, transparent) 0%,
+      transparent 62%
+    );
+}
+
+/* -------------------------------------------------------------- citacao --- */
+
+[data-id="palestras"] .pl-citacao {
+  margin: 0;
+}
+
+[data-id="palestras"] .pl-citacao-texto {
+  margin: 0;
+  /* 7.2vw e nao 8.2: a 8.2 a citacao caia em linhas de UMA palavra no
+     celular, que e coluna de orfaos, nao citacao grande */
+  font-size: clamp(1.625rem, 7.2vw, 3.25rem);
+  font-style: italic;
+  font-weight: 500;
+  font-stretch: 100%;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: pretty;
+  color: var(--fg);
+}
+
+/* As palavras nascem OPACAS. Quem apaga pra 0.15 e o cliente, e so quando vai
+   mesmo animar — sem JS ou com reduced-motion a citacao fica legivel. */
+[data-id="palestras"] .pl-palavra {
+  opacity: 1;
+}
+
+[data-id="palestras"] .pl-citacao-fonte {
+  margin-top: clamp(0.75rem, 2.5vw, 1rem);
+  font-size: clamp(0.688rem, 2.6vw, 0.813rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+[data-id="palestras"] .pl-citacao-fonte::before {
+  content: "— ";
+}
+
+/* ------------------------------------------------------- mini-briefing --- */
+
+[data-id="palestras"] .pl-convite {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2.5vw, 1rem);
+  width: 100%;
+  max-width: 34rem;
+}
+
+[data-id="palestras"] .pl-convite-nota {
+  font-size: clamp(0.75rem, 3vw, 0.813rem);
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+[data-id="palestras"] .pl-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem 0.75rem;
+}
+
+[data-id="palestras"] .pl-campo {
+  display: block;
+  min-width: 0;
+  cursor: text;
+}
+
+[data-id="palestras"] .pl-campo-rotulo {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.688rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+[data-id="palestras"] .pl-campo-input {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  /* 0.625rem e nao 0.75: a dica mais longa ("Quantas pessoas") passava a 5px
+     de cortar, e durante a troca da fonte de fallback pra Archivo ela cortava */
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: 10px;
+  /* A borda e o que identifica o campo como campo, entao ela precisa dos 3:1
+     de contraste nao-textual. A 30% media 1,63:1; a 62% mede 3,06:1. */
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 62%, transparent);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  color: var(--fg);
+  font-family: inherit;
+  /* 16px e PISO: abaixo disso o Safari do iPhone — que e o navegador interno do
+     Instagram — da zoom na pagina ao focar o campo. Mesma armadilha do 03. */
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+[data-id="palestras"] .pl-campo-input::placeholder {
+  font-weight: 400;
+  /* 70%, nao 62%: a 62 a dica media 3,95:1 e texto quer 4,5:1 */
+  color: color-mix(in srgb, var(--fg) 70%, var(--bg));
+}
+
+@media (min-width: 900px) {
+  /* editorial de duas colunas: a tela de projetor de um lado, a citacao do
+     outro. Os temas atravessam as duas em cima. */
+  [data-id="palestras"] .pl-editorial {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "temas temas"
+      "tela  citacao";
+    align-items: center;
+    column-gap: clamp(2rem, 4vw, 3.5rem);
+  }
+
+  [data-id="palestras"] .pl-temas {
+    grid-area: temas;
+  }
+
+  [data-id="palestras"] .pl-tela {
+    grid-area: tela;
+  }
+
+  [data-id="palestras"] .pl-citacao {
+    grid-area: citacao;
+    /* sem teto em ch: a coluna do grid ja e o limite. Com 16ch a citacao
+       voltava a quebrar em linhas de UMA palavra no desktop, que foi
+       exatamente o problema que o tamanho menor resolveu no celular. */
+    max-width: none;
+  }
+
+  /* os quatro campos lado a lado so cabem com mais largura: a 34rem a coluna
+     ficava com 128px, o rotulo "PUBLICO ESTIMADO" quebrava em duas linhas e a
+     dica mais longa cortava */
+  [data-id="palestras"] .pl-convite {
+    max-width: 44rem;
+  }
+
+  [data-id="palestras"] .pl-campos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* --- palestras em tela baixa (notebook) ---
+
+   Este e o capitulo mais alto do site e o unico que nao fecha numa tela de
+   notebook: medido 1033px numa viewport de 870, ou seja 163px sobrando — e o
+   que sobrava era exatamente o CTA, que ficava em y=915 e NUNCA aparecia sem
+   rolar. Um capitulo de venda sem o botao a vista e um capitulo quebrado.
+
+   Os 163px saem de tres lugares, nenhum deles do conteudo: as duas pontas do
+   padding, o gap entre os blocos, e o teto da tela de projetor (a foto tem
+   604px reais e estava sendo exibida nos 604 inteiros; 30rem continua bem
+   abaixo do arquivo, entao nao ha ampliacao — a regra do projeto segue
+   valendo). A 1440 de altura nada disso entra. */
+@media (min-width: 900px) and (max-height: 899px) {
+  [data-id="palestras"] .palco-conteudo {
+    padding-top: clamp(2.5rem, 5vh, 3.5rem);
+    padding-bottom: clamp(1.5rem, 3.5vh, 2.25rem);
+    gap: clamp(0.625rem, 1.6vh, 1rem);
+  }
+
+  [data-id="palestras"] .pl-editorial {
+    row-gap: clamp(0.75rem, 2vh, 1.25rem);
+  }
+
+  [data-id="palestras"] .pl-tela {
+    max-width: 30rem;
+  }
+}
+
+/* --------------------------------------------------- capitulo 05 YouTube --- */
+
+[data-id="youtube"] {
+  /* Teto da tela grande. NAO e gosto: `hqdefault.jpg` tem 480px de largura
+     reais, e essa e a unica capa que existe pra TODO video (as bonitas faltam
+     em video antigo ou vertical e devolveriam 404 dentro do next/image). Subir
+     daqui e ampliar imagem, que o projeto proibe. Ver lib/youtube.ts. */
+  --yt-tela: 480px;
+  /* a reserva usa a foto do Andre, que tem 647px reais — outro arquivo, outro
+     teto. As duas nunca aparecem juntas. */
+  --yt-reserva: 647px;
+  --yt-canto: 14px;
+}
+
+/* No celular a tela vem ANTES do miolo, em fluxo: o video e o capitulo, e quem
+   chega precisa ver a tela sem rolar. O respiro de topo do esqueleto passa pra
+   ca (o rail horizontal mora nos primeiros ~40px da tela). */
+[data-id="youtube"] .palco-conteudo {
+  /* No celular a tela, o texto e o botao sao UM bloco so, centrado no
+     capitulo — a pagina de um video: player, titulo embaixo, botao de inscrever
+     embaixo dele. Espalhar os tres pela altura da tela (que e o que o
+     space-between do esqueleto faz) abria ~380px de breu no meio deles. */
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  padding-top: clamp(1.25rem, 3.5vh, 2rem);
+  padding-bottom: clamp(1.5rem, 4vh, 3rem);
+  gap: clamp(0.625rem, 2.4vw, 1.125rem);
+}
+
+/* O palco centra o bloco inteiro em vez de distribuir. Ver a nota do miolo. */
+[data-id="youtube"] .palco {
+  justify-content: center;
+}
+
+[data-id="youtube"] .titulo {
+  /* 118 de largura com peso 700: o unico capitulo nesse par. Expandido pra
+     encher a linha, e pesado porque isto e a porta de um canal, nao editorial. */
+  font-weight: 700;
+  font-size: clamp(2.5rem, 11.5vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+[data-id="youtube"] .subtitulo {
+  max-width: 26ch;
+  font-size: clamp(1.125rem, 4.8vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+/* -------------------------------------------------------------- a tela --- */
+
+[data-id="youtube"] .yt-tela {
+  position: relative;
+  /* ACIMA do miolo (que e z-index 2 no esqueleto), e nao abaixo. No desktop a
+     tela sai do fluxo pra direita e o miolo recua com padding — mas padding
+     continua sendo caixa do elemento: com a tela em z-index 1, o
+     .palco-conteudo ficava POR CIMA dela e comia todo clique. Ninguem
+     conseguia dar play. As duas nunca se sobrepoem visualmente (a tela mora na
+     direita, o texto na esquerda), entao subir a tela nao tapa nada. */
+  z-index: 3;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: clamp(0.5rem, 2.2vw, 0.75rem);
+  /* o topo precisa limpar o rail horizontal, que vive nos primeiros ~40px */
+  padding: clamp(3rem, 7.5vh, 4.25rem) var(--gutter) 0;
+}
+
+/* --------------------------------------------------------- fachada 16:9 --- */
+
+[data-id="youtube"] .yt-fachada {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: var(--yt-tela);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: var(--yt-canto);
+  /* o quadro precisa de contorno proprio: capa escura sobre capitulo preto nao
+     tem onde acabar. O branco a 40% sobre o breu mede 3,2:1. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 40%, transparent);
+  background: color-mix(in srgb, var(--fg) 7%, var(--bg));
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-id="youtube"] .yt-fachada--cartao {
+  max-width: none;
+  border-radius: calc(var(--yt-canto) - 4px);
+}
+
+/* a capa tem 480x360 (4:3) com tarja preta em cima e embaixo: o cover na caixa
+   16:9 corta exatamente as tarjas e sobra a imagem de verdade */
+[data-id="youtube"] .yt-capa {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+[data-id="youtube"] .yt-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+[data-id="youtube"] .yt-play-selo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(54px, 16%, 76px);
+  aspect-ratio: 7 / 5;
+  border-radius: 24% / 34%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  filter: drop-shadow(0 3px 12px color-mix(in srgb, var(--bg) 70%, transparent));
+  transition: scale 0.25s var(--ease-saida);
+}
+
+[data-id="youtube"] .yt-play svg {
+  width: 44%;
+  height: auto;
+}
+
+[data-id="youtube"] .yt-fachada--cartao .yt-play-selo {
+  width: 38px;
+}
+
+@media (hover: hover) {
+  [data-id="youtube"] .yt-fachada:hover .yt-play-selo {
+    scale: 1.1;
+  }
+}
+
+[data-id="youtube"] .yt-fachada:active .yt-play-selo {
+  scale: 0.94;
+}
+
+/* O titulo do video fica na base da capa, sobre um degrade. Ele e tambem o
+   nome acessivel do botao — por isso e texto de verdade, nao um atributo. */
+[data-id="youtube"] .yt-fachada-titulo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 2rem 0.75rem 0.625rem;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg) 92%, transparent) 30%,
+    transparent
+  );
+  font-size: clamp(0.75rem, 3vw, 0.875rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--fg);
+}
+
+[data-id="youtube"] .yt-fachada--cartao .yt-fachada-titulo {
+  padding: 1.5rem 0.5rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* O clamp precisa de um elemento NAO posicionado: `position: absolute` no pai
+   bloqueia o display e `-webkit-box` vira `flow-root`, matando o clamp. O
+   sintoma era titulo de video cortado no meio da terceira linha, sem
+   reticencia. */
+[data-id="youtube"] .yt-fachada-texto {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* o iframe herda a mesma caixa da fachada que ele substituiu, entao a tela nao
+   pula de tamanho no instante do play */
+[data-id="youtube"] .yt-fachada--tocando {
+  cursor: default;
+}
+
+[data-id="youtube"] .yt-player {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* -------------------------------------------------------------- trilho --- */
+
+[data-id="youtube"] .yt-trilho {
+  display: flex;
+  gap: 0.5rem;
+  max-width: var(--yt-tela);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  /* scroll-snap NATIVO: CSS puro, sem biblioteca e sem listener de scroll */
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+[data-id="youtube"] .yt-trilho::-webkit-scrollbar {
+  display: none;
+}
+
+[data-id="youtube"] .yt-trilho-item {
+  flex: 0 0 clamp(150px, 42vw, 186px);
+  scroll-snap-align: start;
+}
+
+/* ------------------------------------------------------------- reserva --- */
+
+/* Entra quando nao ha video pra mostrar. Mesma caixa 16:9, a foto do Andre em
+   vermelho e uma marca de play. Nada aqui promete um video que nao existe. */
+[data-id="youtube"] .yt-reserva {
+  /* A LUZ do duotone e o vermelho, e ele entra ESCURECIDO. Medido em oito
+     variantes, e as duas familias erradas erram por motivos diferentes:
+     - vermelho na SOMBRA (como o capitulo 04 faz com o marrom) pinta a coisa
+       mais escura da foto, que aqui e o CABELO dele — sai ruivo artificial e
+       o rosto continua cinza;
+     - vermelho puro na luz deixa a foto rosada e CLARA, e ela flutua em cima
+       de um capitulo quase preto como um adesivo.
+     Escurecendo o acento a 70% sobre o breu, a foto vira tela acesa em sala
+     escura, que e o assunto do capitulo. Continua tudo da paleta. */
+  --duo-claro: color-mix(in srgb, var(--accent) 70%, var(--bg));
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: var(--yt-reserva);
+  aspect-ratio: 16 / 9;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--yt-canto);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 40%, transparent);
+  color: var(--fg);
+}
+
+/* a foto e um retrato de 647x857 dentro de uma caixa 16:9: no corte central a
+   cabeca dele fica pela metade */
+[data-id="youtube"] .yt-reserva .tratada img {
+  object-position: 50% 24%;
+}
+
+[data-id="youtube"] .yt-reserva-play {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+[data-id="youtube"] .yt-reserva-play svg {
+  width: clamp(52px, 15%, 76px);
+  height: auto;
+  color: var(--fg);
+  filter: drop-shadow(0 2px 14px color-mix(in srgb, var(--bg) 85%, transparent));
+  transition: scale 0.25s var(--ease-saida);
+}
+
+[data-id="youtube"] .yt-reserva-rotulo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  padding: 2.5rem 0.875rem 0.75rem;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg) 92%, transparent) 30%,
+    transparent
+  );
+  font-size: clamp(0.688rem, 2.8vw, 0.813rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+@media (hover: hover) {
+  [data-id="youtube"] .yt-reserva--link:hover .yt-reserva-play svg {
+    scale: 1.08;
+  }
+}
+
+/* ----------------------------------------------------------- TV ligando --- */
+
+/* Nasce invisivel e quem acende e o cliente, uma vez so. Sem JS, ou com
+   reduced-motion, ele nunca aparece — isto e enfeite, nao conteudo. */
+[data-id="youtube"] .yt-tv {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-id="youtube"] .yt-tv-linhas {
+  position: absolute;
+  inset: 0;
+  /* as scanlines saem do proprio breu do capitulo, nao de um preto avulso */
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--bg) 88%, transparent) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* a fresta que se abre: uma faixa clara no meio da tela, esticada em scaleY */
+[data-id="youtube"] .yt-tv-risco {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--fg) 60%, transparent) 42%,
+    var(--fg) 50%,
+    color-mix(in srgb, var(--fg) 60%, transparent) 58%,
+    transparent
+  );
+  transform-origin: 50% 50%;
+}
+
+@media (min-width: 900px) {
+  /* no desktop a tela sai do fluxo e vai pra direita, e o miolo recua — o mesmo
+     arranjo do cracha do 03. O recuo e espaco ocupado, nao reserva vazia. */
+  /* A coluna da direita pode ter ate 647px (o teto da foto da reserva), mas a
+     CAPA de video para nos 480px reais dela — quem limita e o proprio
+     .yt-fachada, que continua valendo aqui. Zerar o max-width no desktop era
+     bug: media a 634px de largura servindo um arquivo de 360, ou seja, foto
+     ampliada, que e justamente o que o projeto proibe. */
+  /* No desktop os tres cartoes cabem inteiros embaixo da tela grande, entao
+     viram grade e o trilho para de rolar. No celular ele continua carrossel
+     com scroll-snap, porque tres cartoes nao cabem em 330px. */
+  [data-id="youtube"] .yt-trilho {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  [data-id="youtube"] .yt-trilho-item {
+    flex: none;
+  }
+
+  [data-id="youtube"] .yt-tela {
+    position: absolute;
+    flex: none;
+    top: 50%;
+    right: clamp(2rem, 5vw, 5rem);
+    /* fit-content, e nao uma largura fixa: cada estado tem o teto do arquivo
+       dele (480px a capa de video, 647px a foto da reserva) e a coluna encolhe
+       ate o que estiver dentro. Com largura fixa a capa ficava encostada na
+       esquerda de uma coluna de 634px e sobrava um vao de 154px ate a margem. */
+    width: fit-content;
+    max-width: min(var(--yt-reserva), 44vw);
+    padding: 0;
+    translate: 0 -50%;
+  }
+
+  [data-id="youtube"] .palco-conteudo {
+    padding-top: clamp(5rem, 12vh, 8rem);
+    padding-bottom: clamp(2rem, 6vh, 4rem);
+    padding-right: 52%;
+  }
+
+}
+
+/* ---------------------------------------------- capitulo 06 Santo Visu --- */
+
+[data-id="barbearia"] {
+  /* o marrom couro do capitulo: o fg (quase preto quente) puxado pro mostarda.
+     E o tom das cadeiras e do tijolo da foto, e ele separa o cartao de
+     endereco do campo amarelo sem virar uma caixa cinza. */
+  --ba-couro: color-mix(in srgb, var(--fg) 88%, var(--bg));
+  --ba-selo: clamp(210px, 58vw, 380px);
+  --ba-canto: 16px;
+}
+
+/* No celular a foto vem primeiro, em fluxo, como no 03 e no 05. Este e o
+   ULTIMO capitulo: ele nao e coberto por ninguem e o rodape vem depois, entao
+   passar de uma tela aqui nao esconde nada — e o unico capitulo do site em que
+   isso e verdade. */
+[data-id="barbearia"] .palco-conteudo {
+  padding-top: clamp(1.5rem, 4vh, 2.25rem);
+  padding-bottom: clamp(2rem, 6vh, 3.5rem);
+  gap: clamp(0.75rem, 2.6vw, 1.25rem);
+}
+
+[data-id="barbearia"] .titulo {
+  /* levemente condensado (tituloWdth 95) com peso 600: o mais leve do site
+     depois dos dois editoriais. Fecho quente, nao grito. */
+  font-weight: 600;
+  font-size: clamp(3rem, 14vw, 7.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+/* A intro que substituiu os cartoes de endereco: mora dentro do subtitulo,
+   como o texto de apoio do capitulo 03, e por isso e um <span> em bloco. */
+[data-id="barbearia"] .ba-texto {
+  display: block;
+  max-width: 38ch;
+  margin-top: 0.875rem;
+  font-size: clamp(0.938rem, 3.8vw, 1.063rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+[data-id="barbearia"] .subtitulo {
+  max-width: 20ch;
+  font-size: clamp(1.25rem, 5.4vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+
+/* -------------------------------------------------------------- mosaico --- */
+
+/* AQUI A FOTO NAO LEVA DUOTONE, e e o unico capitulo assim.
+   Medido lado a lado com 0.72, 0.55, 0.40 e 0.25: em todas elas o tijolo sai
+   cinza-esverdeado e o couro morre. A conta explica — a foto vira cinza antes,
+   e cinza medio multiplicado pelo mostarda da oliva. So que esta foto JA E a
+   paleta do capitulo: parede de tijolo, couro marrom e o selo dourado aceso.
+   Tingir ela nos tons do capitulo e tirar dela justamente o que ela tem.
+   O grao e a vinheta ficam, pra ela continuar da mesma familia das outras. */
+[data-id="barbearia"] .ba-mosaico .tratada-sombra,
+[data-id="barbearia"] .ba-mosaico .tratada-luz {
+  opacity: 0;
+}
+
+[data-id="barbearia"] .ba-mosaico .tratada--tratada img {
+  filter: saturate(1.06) contrast(1.05);
+}
+
+[data-id="barbearia"] .ba-mosaico {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* limpa o rail horizontal do topo */
+  padding-top: clamp(2.75rem, 7vh, 3.75rem);
+  overflow: hidden;
+}
+
+/* UMA foto: quadro grande e parado, com as margens do capitulo. Nada de laco —
+   a mesma imagem passando de novo e de novo anuncia que so existe uma. */
+[data-id="barbearia"] .ba-mosaico--unica {
+  padding-inline: var(--gutter);
+}
+
+[data-id="barbearia"] .ba-quadro {
+  position: relative;
+  width: 100%;
+  /* a foto e quadrada (802x802); o 4:3 corta 100px em cima e embaixo, o que
+     deixa o luminoso inteiro e as cadeiras na base */
+  aspect-ratio: 4 / 3;
+  max-width: 802px;
+  overflow: hidden;
+  border-radius: var(--ba-canto);
+}
+
+/* 2 a 5 fotos: uma faixa. 6 ou mais: tres, cada uma correndo pro lado
+   contrario da de cima (ver MosaicoBarbearia.tsx). */
+[data-id="barbearia"] .ba-faixa {
+  display: flex;
+  gap: 6px;
+  /* larga o suficiente pra transbordar nos dois lados: o parallax anda ate 9%
+     da largura da tela e sem folga abriria um vao na borda */
+  width: max-content;
+  margin-inline: -18vw;
+  will-change: transform;
+}
+
+[data-id="barbearia"] .ba-tijolo {
+  position: relative;
+  flex: none;
+  width: clamp(150px, 38vw, 300px);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: calc(var(--ba-canto) - 6px);
+}
+
+/* ------------------------------------------------- enderecos e horarios --- */
+
+/* O involucro do slot `provas` e um flex com wrap e gap; com UM filho de
+   `flex: 1 1 100%` o wrap e o gap viram inertes e ele vira bloco. Mesmo truque
+   do capitulo 04 — foi o que dispensou um slot novo no esqueleto. */
+[data-id="barbearia"] .ba-lugares {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 3vw, 1.125rem);
+  min-width: 0;
+}
+
+[data-id="barbearia"] .ba-unidades {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-id="barbearia"] .ba-unidade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 12px;
+  /* 12% do couro sobre o mostarda: cartao quente, nao caixa cinza */
+  background: color-mix(in srgb, var(--ba-couro) 12%, transparent);
+}
+
+[data-id="barbearia"] .ba-unidade-nome {
+  flex: none;
+  font-size: clamp(0.875rem, 3.4vw, 1rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+[data-id="barbearia"] .ba-unidade-endereco {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: clamp(0.813rem, 3.2vw, 0.938rem);
+  line-height: 1.35;
+  /* NAO e o --muted puro. O cartao escurece o fundo o suficiente pra derrubar
+     o muted de 4,82:1 (sobre o mostarda) pra 3,99:1 aqui dentro, e isto e
+     texto: quer 4,5:1. Com 20% de fg por cima ele mede 4,60:1. */
+  color: color-mix(in srgb, var(--muted) 80%, var(--fg));
+}
+
+[data-id="barbearia"] .ba-unidade-local {
+  font-size: 0.875em;
+}
+
+[data-id="barbearia"] .ba-chegar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35rem;
+  /* alvo de toque de 44px sem engordar a linha: o padding vertical e negativo
+     no layout via margin, entao o cartao nao cresce */
+  padding: 0.5rem 0;
+  font-size: clamp(0.75rem, 3vw, 0.813rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--fg);
+}
+
+@media (hover: hover) {
+  [data-id="barbearia"] .ba-chegar:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+[data-id="barbearia"] .ba-horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0;
+}
+
+[data-id="barbearia"] .ba-horario {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: clamp(0.75rem, 3vw, 0.875rem);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+[data-id="barbearia"] .ba-horario dt {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+[data-id="barbearia"] .ba-horario dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ----------------------------------------------------------------- selo --- */
+
+/* MARCA D'AGUA GRANDE, SANGRANDO NA BORDA, E ATRAS DE TUDO — nao um carimbo
+   pequeno no canto. O primeiro desenho punha o selo do tamanho de um adesivo
+   ao lado da foto, e a foto TEM o mesmo selo aceso na parede: os dois ficavam
+   lado a lado, do mesmo tamanho, e liam como erro de duplicata. Enorme e
+   cortado pela borda ele muda de registro — vira papel de parede da secao, e o
+   letreiro da foto volta a ser o objeto que ele e. */
+[data-id="barbearia"] .ba-selo {
+  position: absolute;
+  right: calc(var(--ba-selo) * -0.34);
+  bottom: calc(var(--ba-selo) * -0.2);
+  z-index: 0;
+  width: var(--ba-selo);
+  height: var(--ba-selo);
+  pointer-events: none;
+}
+
+/* As duas pecas entram como MASCARA e a cor sai do capitulo: o SVG e uma forma,
+   nao uma figura colorida. Mesmo arranjo da marca do Barbers Vale no 01. */
+[data-id="barbearia"] .ba-selo-anel,
+[data-id="barbearia"] .ba-selo-miolo {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  /* 13% do couro sobre o mostarda: visivel o bastante pra o giro se ler, fraco
+     o bastante pra nao brigar com o texto que passa por cima */
+  background-color: color-mix(in srgb, var(--fg) 13%, transparent);
+}
+
+[data-id="barbearia"] .ba-selo-anel {
+  -webkit-mask-image: url(/marca/santovisu-anel.svg);
+  mask-image: url(/marca/santovisu-anel.svg);
+}
+
+[data-id="barbearia"] .ba-selo-miolo {
+  -webkit-mask-image: url(/marca/santovisu-miolo.svg);
+  mask-image: url(/marca/santovisu-miolo.svg);
+}
+
+@media (min-width: 900px) {
+  /* no desktop a foto sai do fluxo e vai pra direita, e o miolo recua — mesmo
+     arranjo do cracha do 03 e da tela do 05 */
+  [data-id="barbearia"] .ba-mosaico {
+    position: absolute;
+    top: 50%;
+    right: clamp(2rem, 5vw, 5rem);
+    width: min(802px, 46vw);
+    padding-top: 0;
+    translate: 0 -50%;
+  }
+
+  [data-id="barbearia"] .ba-mosaico--unica {
+    padding-inline: 0;
+  }
+
+  [data-id="barbearia"] .palco-conteudo {
+    padding-top: clamp(5rem, 12vh, 8rem);
+    padding-bottom: clamp(2rem, 6vh, 4rem);
+    padding-right: 52%;
+  }
+
+  [data-id="barbearia"] .ba-unidades {
+    gap: 0.375rem;
+  }
+
+  /* no desktop ela desce pro canto de baixo da COLUNA DE TEXTO, sangrando na
+     esquerda: a direita ja e da foto */
+  [data-id="barbearia"] .ba-selo {
+    right: auto;
+    bottom: calc(var(--ba-selo) * -0.26);
+    left: calc(var(--ba-selo) * -0.3);
+  }
+}
+
+/* ------------------------------------------------------- ProgressRail --- */
+
+.rail {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  gap: 6px;
+}
+
+/* celular: fita horizontal no topo */
+.rail {
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: var(--gutter);
+  right: var(--gutter);
+}
+
+.rail-traco {
+  flex: 1;
+  height: 28px; /* alvo de toque; o risco visivel e o ::after */
+  display: flex;
+  align-items: center;
+  border-radius: 999px;
+}
+
+.rail-traco::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--rail-cor);
+  opacity: 0.26;
+  /* o rail e fixo e a cor dele e a do capitulo ATIVO, mas o que passa por tras
+     durante a transicao e o capitulo anterior. Sem essa sombra, acento branco
+     sobre capitulo claro some. */
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.45));
+  transition: opacity 0.3s var(--ease-saida), transform 0.3s var(--ease-saida);
+}
+
+.rail-traco[aria-current="true"]::after {
+  opacity: 1;
+  transform: scaleY(1.67);
+}
+
+@media (min-width: 900px) {
+  .rail {
+    top: 50%;
+    right: 1.75rem;
+    bottom: auto;
+    left: auto;
+    flex-direction: column;
+    translate: 0 -50%;
+  }
+
+  .rail-traco {
+    width: 28px;
+    height: auto;
+    justify-content: flex-end;
+  }
+
+  .rail-traco::after {
+    width: 22px;
+    height: 3px;
+  }
+
+  .rail-traco[aria-current="true"]::after {
+    width: 28px;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------- rodape --- */
+
+/* Fora da pilha, em fluxo normal, com a paleta do capitulo 00: e o fecho do
+   circulo. O z-index existe porque o ultimo capitulo ainda esta em fluxo logo
+   acima e nao pode passar por cima daqui. */
+.rodape {
+  position: relative;
+  z-index: 10;
+  background: var(--bg);
+  color: var(--fg);
+  padding: clamp(2.5rem, 8vh, 4.5rem) var(--gutter) clamp(2rem, 5vh, 3rem);
+}
+
+.rodape-topo {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.75rem, 5vw, 3rem);
+}
+
+.rodape-nome {
+  font-size: clamp(1.75rem, 8vw, 2.75rem);
+  font-weight: 800;
+  font-stretch: 112%;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+
+.rodape-assinatura {
+  margin-top: 0.375rem;
+  font-size: clamp(0.813rem, 3.2vw, 0.938rem);
+  color: var(--muted);
+}
+
+.rodape-ig {
+  display: inline-block;
+  margin-top: 0.875rem;
+  font-size: clamp(0.875rem, 3.4vw, 1rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  color: var(--fg);
+}
+
+/* ---------------------------------------------------------- indice curto --- */
+
+.rodape-indice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.125rem 1rem;
+}
+
+.rodape-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  /* alvo de toque de 44px: no celular estes seis links ficam colados */
+  min-height: 44px;
+  font-size: clamp(0.875rem, 3.4vw, 0.938rem);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+@media (hover: hover) {
+  .rodape-link:hover {
+    color: var(--fg);
+  }
+
+  .rodape-link:hover .rodape-cor {
+    scale: 1.25;
+  }
+}
+
+/* A amostra leva um anel pelo mesmo motivo do indice do hero: metade das cores
+   do site e quase preta, e sem o anel elas somem neste fundo quase preto. */
+.rodape-cor {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 34%, transparent);
+  transition: scale 0.25s var(--ease-saida);
+}
+
+.rodape-link-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ base --- */
+
+.rodape-base {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: clamp(2rem, 6vh, 3rem);
+  padding-top: clamp(1rem, 3vh, 1.5rem);
+  border-top: 1px solid color-mix(in srgb, var(--fg) 14%, transparent);
+  font-size: clamp(0.75rem, 3vw, 0.813rem);
+  color: var(--muted);
+}
+
+/* Assinatura de quem fez, nao anuncio: mesmo tamanho do copyright. E a mesma
+   dos outros sites da casa — marca dos cinco pontos e "feito por Sotalia Hub". */
+.rodape-assinatura-sotalia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  transition: color 0.3s var(--ease-saida);
+}
+
+.rodape-golfinho {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+.rodape-assinatura-sotalia b {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+@media (hover: hover) {
+  .rodape-assinatura-sotalia:hover {
+    color: var(--fg);
+  }
+}
+
+/* o pulinho dos cinco pontos, em escada: o atraso de cada um vem inline no
+   componente. A origem e a propria caixa do circulo (`fill-box`), senao o
+   `scale` giraria em volta do canto do SVG inteiro. */
+.sot-ponto {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.rodape-assinatura-sotalia:hover .sot-ponto,
+.rodape-assinatura-sotalia:focus-visible .sot-ponto {
+  animation: sot-salto 0.62s var(--ease-saida) both;
+}
+
+@keyframes sot-salto {
+  0% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-3.2px) scale(1.12);
+  }
+  70% {
+    transform: translateY(0.6px) scale(0.96);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* o bloco global de reduced-motion so zera a DURACAO; aqui o salto some. */
+@media (prefers-reduced-motion: reduce) {
+  .rodape-assinatura-sotalia:hover .sot-ponto,
+  .rodape-assinatura-sotalia:focus-visible .sot-ponto {
+    animation-name: none;
+  }
+}
+
+/* O contato e a unica ACAO do rodape (o resto e navegacao), entao ele fica
+   maior que tudo e por ultimo, onde o polegar termina a pagina. */
+.rodape-direct {
+  display: inline-block;
+  margin-top: clamp(1.5rem, 4vh, 2.25rem);
+  font-size: clamp(2rem, 9vw, 4rem);
+  font-weight: 800;
+  font-stretch: 88%;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 10px;
+  color: var(--fg);
+}
+
+@media (min-width: 900px) {
+  .rodape-topo {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .rodape-indice {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.125rem 2rem;
+  }
+
+  .rodape-base {
+    justify-content: space-between;
+  }
+}
+
+/* --------------------------------------------------------------- misc --- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
