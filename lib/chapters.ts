@@ -215,6 +215,10 @@ export type Capitulo = {
 // rotulo do CTA. Uma constante, duas leituras — nunca duas copias do endereco.
 const LP_BARBERSVALE = "https://lp.barbersvale.com.br/";
 const IG_BARBERSVALE = "https://instagram.com/barbersvale";
+// Checkout do ingresso 2K27 na Eduzz, mandado pelo Leandro em 30/10. Limpo do
+// fbclid e da UTM do Instagram que vieram colados; a UTM do site entra pelo
+// comUtm, e a Eduzz mostra ela no relatorio de vendas. Vai mudar depois.
+const INGRESSO_BARBERSVALE = "https://chk.eduzz.com/8WPN18YE0P";
 
 /**
  * O WHATSAPP COMERCIAL — e ele atende TRES capitulos: Fortix (02), Choque de
@@ -523,17 +527,18 @@ export const chapters: Capitulo[] = [
       lp: LP_BARBERSVALE,
       instagram: IG_BARBERSVALE,
     },
-    // 2K27, lido na bio do Instagram do evento em 30/10/2026: "18 e 19 de
-    // outubro | BARBERS VALE 2K27". A edicao e "A ascensão", como o Andre
-    // escreveu (a arte do post grafa "ASCENÇÃO"). Local, cidade e hora de
-    // abertura ainda NAO foram divulgados: ficam de fora, e a contagem mira a
-    // meia-noite do dia 18. Ver TODO.md.
+    // 2K27, da pagina do ingresso na Eduzz (30/10/2026): inicio 18/10/2027 as
+    // 07:00, termino 19/10 as 19:00, Av. Eng. Davi Monteiro Lino, 3595, Jardim
+    // Marcondes, Jacarei. Preco fica de fora de proposito (pedido do Leandro).
     evento: {
       nome: "Barbers Vale",
       data: "2027-10-18",
       fim: "2027-10-19",
       rotulo: "18 e 19 de outubro",
       edicao: "A ASCENSÃO",
+      local: "Av. Eng. Davi Monteiro Lino, 3595",
+      cidade: "Jacareí-SP",
+      inicio: "2027-10-18T07:00:00-03:00",
     },
     conteudo: {
       titulo: "BARBERS VALE 2K27",
@@ -546,7 +551,7 @@ export const chapters: Capitulo[] = [
       },
       ctaPrincipal: {
         rotulo: "Garantir meu ingresso",
-        href: LP_BARBERSVALE,
+        href: INGRESSO_BARBERSVALE,
         rotuloDepois: "Conhecer o Barbers Vale",
       },
       ctaSecundario: {

@@ -25,7 +25,7 @@ quando chegar**.
 | o quê | estado |
 |---|---|
 | Links | ✅ Completo. LP própria (`lp.barbersvale.com.br`) e Instagram do evento. |
-| **Edição 2K27 (30/10)** | "A ASCENSÃO", 18 e 19/10/2027, lida na bio do Instagram do evento. **Falta:** local, cidade, hora de abertura (a contagem mira a meia-noite do dia 18) e a cor nova da edição, que o Leandro vai ver com o André. |
+| **Edição 2K27 (30/10)** | "A ASCENSÃO", 18/10/2027 07:00 a 19/10 19:00, Av. Eng. Davi Monteiro Lino, 3595, Jacareí. Ingresso vai pro checkout da Eduzz (link provisório, vai mudar). **Falta:** link definitivo e a cor nova da edição, que o Leandro vai ver com o André. |
 | Foto a trocar | `andre-auditorio.webp` (763×767) é print de Instagram e limita o tamanho de exibição. Uma foto boa do palco cheio melhoraria o capítulo. |
 | Foto travada | `auditorio-barbersvale.webp` tem **ícone de perfil do Instagram** no canto inferior esquerdo. Precisa de recorte antes de entrar — hoje não é usada. |
 
