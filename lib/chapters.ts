@@ -434,7 +434,8 @@ export const chapters: Capitulo[] = [
           sufixo: " mi",
           rotulo: "faturados com a Santo Visu no último ano",
         },
-        { prefixo: "+", valor: 20, rotulo: "barbearias mentoradas" },
+        // atualizado pelo Andre em 30/10: "ja sao mais de 50 mentorados que passaram"
+        { prefixo: "+", valor: 50, rotulo: "mentorados" },
       ],
       ctaPrincipal: {
         rotulo: "Quero ser FORTIX",
