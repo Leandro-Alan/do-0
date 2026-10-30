@@ -76,7 +76,7 @@ export default function Rodape() {
               <span
                 className="rodape-cor"
                 aria-hidden="true"
-                style={{ background: frente.paleta.bg }}
+                style={{ background: frente.amostra ?? frente.paleta.bg }}
               />
               <span className="rodape-link-nome">{frente.nome}</span>
             </a>

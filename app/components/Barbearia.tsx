@@ -2,7 +2,7 @@ import Chapter from "./Chapter";
 import Cta from "./Cta";
 import MosaicoBarbearia from "./MosaicoBarbearia";
 import SeloSantoVisu from "./SeloSantoVisu";
-import { chapters, ou } from "@/lib/chapters";
+import { capitulo, ou } from "@/lib/chapters";
 
 /**
  * Capítulo 06. Onde tudo começou: mostarda e marrom couro, tijolo, madeira e o
@@ -26,7 +26,7 @@ import { chapters, ou } from "@/lib/chapters";
  * O `Unidades.tsx` continua no projeto, pronto e testado, caso isso volte.
  */
 export default function Barbearia() {
-  const cap = chapters[6];
+  const cap = capitulo("barbearia");
   const conteudo = cap.conteudo;
   if (!conteudo) return null;
 

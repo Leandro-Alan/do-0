@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { CAPA_ALTURA, CAPA_LARGURA, capa, embed } from "@/lib/youtube";
+import { CAPA_ALTURA, CAPA_LARGURA, embed } from "@/lib/youtube";
 
 /**
  * A fachada de um video: capa estatica + botao de play. **So no toque** ela
@@ -30,10 +30,13 @@ import { CAPA_ALTURA, CAPA_LARGURA, capa, embed } from "@/lib/youtube";
 export default function FachadaVideo({
   id,
   titulo,
+  capa,
   tamanho = "grande",
 }: {
   id: string;
   titulo: string;
+  /** URL da capa, ja resolvida no servidor por `resolverCapa` — ver lib/youtube.ts */
+  capa: string;
   /** "grande" = a tela principal; "cartao" = um dos tres do trilho */
   tamanho?: "grande" | "cartao";
 }) {
@@ -74,7 +77,7 @@ export default function FachadaVideo({
       }}
     >
       <Image
-        src={capa(id)}
+        src={capa}
         alt=""
         width={CAPA_LARGURA}
         height={CAPA_ALTURA}

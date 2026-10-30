@@ -3,7 +3,7 @@ import Cracha, { ProvedorNome } from "./Cracha";
 import Cta from "./Cta";
 import CtaVaga from "./CtaVaga";
 import Proof from "./Proof";
-import { chapters, ou } from "@/lib/chapters";
+import { capitulo, ou } from "@/lib/chapters";
 
 /**
  * Capitulo 03. Certificacao para donos e gestores de barbearia: azul marinho
@@ -21,7 +21,7 @@ import { chapters, ou } from "@/lib/chapters";
  * secao continuam irmaos diretos de .pilha.
  */
 export default function Choque() {
-  const cap = chapters[3];
+  const cap = capitulo("choque");
   const conteudo = cap.conteudo;
   if (!conteudo) return null;
 

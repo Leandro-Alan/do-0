@@ -4,7 +4,7 @@ import Cordilheira from "./Cordilheira";
 import Cta from "./Cta";
 import CtaIngresso from "./CtaIngresso";
 import TreatedImage from "./TreatedImage";
-import { chapters, ou } from "@/lib/chapters";
+import { capitulo, ou } from "@/lib/chapters";
 
 /**
  * Capitulo 01. E TEASER, nao pagina de evento: o Barbers Vale ja tem uma
@@ -16,7 +16,7 @@ import { chapters, ou } from "@/lib/chapters";
  * ele existe: o elemento-assinatura do capitulo.
  */
 export default function BarbersVale() {
-  const cap = chapters[1];
+  const cap = capitulo("barbersvale");
   const { conteudo, evento } = cap;
   if (!conteudo || !evento) return null;
 

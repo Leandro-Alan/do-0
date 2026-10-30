@@ -21,11 +21,16 @@ export const REVALIDA_YOUTUBE = 21600;
 /** Corta a espera. Sem isso um feed pendurado trava o `next build`. */
 const ESPERA_MS = 6000;
 
+/** Corta a espera de CADA checagem de capa — sao ate 4 por build, em paralelo. */
+const ESPERA_CAPA_MS = 2500;
+
 export type Video = {
   id: string;
   titulo: string;
   /** ISO, como veio do feed. Quem formata e a tela. */
   publicado: string;
+  /** URL da capa ja resolvida — ver `resolverCapa`. */
+  capa: string;
 };
 
 /**
@@ -57,7 +62,14 @@ export async function ultimosVideos(channelId?: string): Promise<Video[] | null>
     if (!resposta.ok) return null;
 
     const videos = extrair(await resposta.text());
-    return videos.length > 0 ? videos : null;
+    if (videos.length === 0) return null;
+
+    // Resolve a capa de cada video EM PARALELO — sao no maximo 4 (1 grande +
+    // 3 do trilho), e cada checagem tem teto proprio de espera.
+    const comCapa = await Promise.all(
+      videos.map(async (v) => ({ ...v, capa: await resolverCapa(v.id) }))
+    );
+    return comCapa;
   } catch {
     // rede, DNS, timeout, XML gigante: cai no bloco de reserva
     return null;
@@ -72,8 +84,8 @@ export async function ultimosVideos(channelId?: string): Promise<Video[] | null>
  * formato mudar, isto devolve lista vazia — que o chamador ja trata como
  * falha. Nunca devolve lixo pra tela.
  */
-function extrair(xml: string): Video[] {
-  const videos: Video[] = [];
+function extrair(xml: string): Omit<Video, "capa">[] {
+  const videos: Omit<Video, "capa">[] = [];
 
   for (const [, bloco] of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
     const id = bloco.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/)?.[1];
@@ -105,17 +117,56 @@ function destrocar(texto: string) {
 }
 
 /**
- * A capa do video. `hqdefault` e a UNICA que existe pra todo video — as
- * bonitas (`maxresdefault`, `hq720`) faltam em video antigo ou vertical e
- * devolveriam 404 dentro de um `next/image`, ou seja, quadro quebrado na tela.
+ * A capa do video, em ordem de preferencia: `maxresdefault` (1280x720, 16:9
+ * de verdade, sem tarja) -> `sddefault` (640x480, 4:3 com tarja, como o
+ * `hqdefault` antigo, so maior) -> NUNCA `hqdefault`.
  *
- * O arquivo tem 480x360 (4:3) com tarja preta em cima e embaixo. O CSS corta
- * as tarjas com `object-fit: cover` numa caixa 16:9, o que da 480x270 reais —
- * e por isso que a tela grande para em 480px de largura. Ver CLAUDE.md.
+ * Trocado em 30/09: `hqdefault` (480x360) era a escolha "segura" porque e a
+ * UNICA capa garantida pra todo video — as bonitas faltam em video antigo ou
+ * vertical e devolvem 404 dentro de um `next/image`, quadro quebrado na tela.
+ * `maxresdefault` tem o mesmo risco — so que agora a gente CONFERE antes: um
+ * HEAD na propria imagem, no servidor, com teto de espera curto. Existe, usa
+ * ela; nao existe (ou demorou), cai pro `sddefault`, que e universal como o
+ * `hqdefault` era — so que maior e sem tarja.
+ *
+ * O CSS continua cortando a tarja do `sddefault` com `object-fit: cover` numa
+ * caixa 16:9, exatamente como fazia com o `hqdefault` — mesma conta, arquivo
+ * maior. Ver `--yt-tela` em globals.css.
  */
-export const capa = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
-export const CAPA_LARGURA = 480;
-export const CAPA_ALTURA = 360;
+const MAXRES = (id: string) => `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+const SD = (id: string) => `https://i.ytimg.com/vi/${id}/sddefault.jpg`;
+
+/**
+ * `maxresdefault` que nao existe de verdade responde 404 — mas o YouTube tem
+ * um caso pior: alguns ids sem thumbnail alta devolvem 200 com uma imagem
+ * cinza de 120x90 esticada. `> 1000` bytes filtra esse placeholder sem abrir
+ * o arquivo: a imagem real pesa dezenas de KB, o placeholder cinza pesa pouco
+ * mais de 1KB em WebP/JPEG.
+ */
+async function existeMaxres(id: string): Promise<boolean> {
+  try {
+    const resposta = await fetch(MAXRES(id), {
+      method: "HEAD",
+      signal: AbortSignal.timeout(ESPERA_CAPA_MS),
+    });
+    if (!resposta.ok) return false;
+    const tamanho = Number(resposta.headers.get("content-length") ?? "0");
+    return tamanho > 1000;
+  } catch {
+    // timeout, DNS, rede: nao arrisca — cai pro sddefault, que e universal
+    return false;
+  }
+}
+
+export async function resolverCapa(id: string): Promise<string> {
+  return (await existeMaxres(id)) ? MAXRES(id) : SD(id);
+}
+
+/** Teto de exibicao: `maxresdefault` real, o caso mais comum agora. Video que
+ *  cair no `sddefault` (640x480) so exibe um pouco mais grosso — o proprio
+ *  `next/image` reamostra pro tamanho pedido, sem distorcer. */
+export const CAPA_LARGURA = 1280;
+export const CAPA_ALTURA = 720;
 
 /** O embed sem cookie de rastreio, so depois do toque. Nunca no primeiro HTML. */
 export const embed = (id: string) =>

@@ -9,22 +9,21 @@ import Rodape from "./components/Rodape";
 import YouTube from "./components/YouTube";
 
 /**
- * Os SETE capitulos estao prontos: 00 (capa + indice), 01 (Barbers Vale),
- * 02 (Fortix), 03 (Choque de Gestao), 04 (Cursos e palestras), 05 (YouTube) e
- * 06 (Santo Visu). A ordem aqui tem que bater com a de lib/chapters.ts — e ela
- * que manda no numero da etiqueta, no rail e na cor da barra do navegador.
+ * Os sete capitulos. A ordem aqui tem que bater com a de lib/chapters.ts
+ * (reordenada em 30/10 a pedido do Andre) — e ela que manda no numero da
+ * etiqueta, no rail e na cor da barra do navegador.
  */
 export default function Home() {
   return (
     <main>
       <ChapterStack>
         <Hero />
-        <BarbersVale />
-        <Fortix />
         <Choque />
+        <Fortix />
+        <Barbearia />
+        <BarbersVale />
         <Palestras />
         <YouTube />
-        <Barbearia />
       </ChapterStack>
       <Rodape />
     </main>

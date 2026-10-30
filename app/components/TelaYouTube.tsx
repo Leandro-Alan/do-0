@@ -39,13 +39,18 @@ export default function TelaYouTube({
 
     return (
       <div className="yt-tela">
-        <FachadaVideo id={primeiro.id} titulo={primeiro.titulo} />
+        <FachadaVideo id={primeiro.id} titulo={primeiro.titulo} capa={primeiro.capa} />
 
         {trilho.length > 0 && (
           <ul className="yt-trilho">
             {trilho.map((video) => (
               <li className="yt-trilho-item" key={video.id}>
-                <FachadaVideo id={video.id} titulo={video.titulo} tamanho="cartao" />
+                <FachadaVideo
+                  id={video.id}
+                  titulo={video.titulo}
+                  capa={video.capa}
+                  tamanho="cartao"
+                />
               </li>
             ))}
           </ul>

@@ -18,8 +18,17 @@ import { useAoAtivar } from "./ChapterStack";
  * agora e um `stagger` de tempo, disparado por `useAoAtivar` toda vez que
  * Cursos e palestras vira o capitulo ativo. Mesma leitura palavra a palavra,
  * sem depender de rolagem.
+ *
+ * `fonte` e opcional: sem ela, nao ha figcaption — e o caso de uma afirmacao
+ * do proprio Andre, que nao precisa de atribuicao a terceiro.
  */
-export default function Citacao({ texto, fonte }: { texto: string; fonte: string }) {
+export default function Citacao({
+  texto,
+  fonte,
+}: {
+  texto: string;
+  fonte?: string;
+}) {
   const raiz = useRef<HTMLElement>(null);
   const palavras = texto.split(/\s+/).filter(Boolean);
 
@@ -49,7 +58,7 @@ export default function Citacao({ texto, fonte }: { texto: string; fonte: string
           </span>
         ))}
       </blockquote>
-      <figcaption className="pl-citacao-fonte">{fonte}</figcaption>
+      {fonte && <figcaption className="pl-citacao-fonte">{fonte}</figcaption>}
     </figure>
   );
 }

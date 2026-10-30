@@ -4,7 +4,7 @@ import EntradaHero from "./EntradaHero";
 import Indice from "./Indice";
 import SeloEvento from "./SeloEvento";
 import TreatedImage from "./TreatedImage";
-import { chapters, eventoVigente } from "@/lib/chapters";
+import { capitulo, chapters, eventoVigente } from "@/lib/chapters";
 
 /**
  * Capitulo 00. Nao e um capitulo de negocio: e capa e INDICE.
@@ -19,7 +19,7 @@ import { chapters, eventoVigente } from "@/lib/chapters";
 export default function Hero() {
   const cap = chapters[0];
   const destinos = chapters.slice(1);
-  const barbersvale = chapters[1];
+  const barbersvale = capitulo("barbersvale");
   const mostrarSelo = eventoVigente(barbersvale.evento);
 
   const foto = cap.conteudo?.foto;
@@ -51,7 +51,8 @@ export default function Hero() {
 
             <div className="hero-corpo">
               <h1 className="hero-nome" id="hero-titulo">
-                {cap.nome.split(" ").map((linha) => (
+                {/* duas linhas: o primeiro nome, e o resto ("Santo Visu") junto */}
+                {linhasDoNome(cap.nome).map((linha) => (
                   <span className="hero-linha" data-entrada="linha" key={linha}>
                     <span>{linha}</span>
                   </span>
@@ -107,4 +108,10 @@ function IconeInstagram() {
       <circle cx="17.35" cy="6.65" r="1.15" fill="currentColor" />
     </svg>
   );
+}
+
+/** "André Santo Visu" -> ["André", "Santo Visu"]. Tres linhas empurrariam o indice pra baixo da dobra. */
+function linhasDoNome(nome: string) {
+  const i = nome.indexOf(" ");
+  return i === -1 ? [nome] : [nome.slice(0, i), nome.slice(i + 1)];
 }

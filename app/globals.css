@@ -380,6 +380,12 @@ body {
 
 /* o degrade forte existe porque nao ha recorte sem fundo do Andre: e ele que
    costura a foto no breu do capitulo e da chao pro nome */
+/* a foto da capa e retrato em pe: no celular a caixa e quase quadrada, e o
+   recorte centrado cortaria a cabeca. Sobe pro rosto. */
+.hero-foto .tratada--capa img {
+  object-position: 50% 12%;
+}
+
 .hero-degrade {
   position: absolute;
   inset: 0;
@@ -568,7 +574,7 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 999px;
-  background: var(--linha-bg);
+  background: var(--linha-cor, var(--linha-bg));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 34%, transparent);
 }
 
@@ -1593,6 +1599,17 @@ body {
   border-radius: 0;
 }
 
+/* `object-fit: cover`, explicito. Sem uma regra dizendo o contrario o valor
+   computado e o inicial (`fill`) — inofensivo enquanto a altura da figura for
+   `auto` (herda de `.tratada img`, na base do arquivo), mas a largura da tela
+   muda de conta por breakpoint (`calc(72svh * 4/3)` aqui, outro valor la
+   embaixo) e uma folga de arredondamento entre largura e altura bastaria pra
+   esticar o quadro em vez de cortar. `cover` fecha essa folga sempre pelo
+   corte. */
+[data-id="palestras"] .pl-tela-foto img {
+  object-fit: cover;
+}
+
 /* o brilho POR CIMA da foto lava ela pra cor da parede — e o que faz a imagem
    parecer projetada e nao colada. Areia do capitulo, nunca branco. */
 [data-id="palestras"] .pl-tela-brilho {
@@ -1862,10 +1879,12 @@ body {
 /* --------------------------------------------------- capitulo 05 YouTube --- */
 
 [data-id="youtube"] {
-  /* Teto da tela grande. NAO e gosto: `hqdefault.jpg` tem 480px de largura
-     reais, e essa e a unica capa que existe pra TODO video (as bonitas faltam
-     em video antigo ou vertical e devolveriam 404 dentro do next/image). Subir
-     daqui e ampliar imagem, que o projeto proibe. Ver lib/youtube.ts. */
+  /* Teto da tela grande. Ficou em 480px por decisao de layout, nao mais por
+     limite de arquivo: desde 30/09 a capa prefere `maxresdefault.jpg`
+     (1280px reais, checado no servidor antes de usar — ver `resolverCapa`
+     em lib/youtube.ts) e so cai pro `sddefault.jpg` (640px) quando aquela nao
+     existe. Os dois folgam bem acima de 480px; subir este numero e questao de
+     layout, nao mais risco de ampliar imagem pequena. */
   --yt-tela: 480px;
   /* a reserva usa a foto do Andre, que tem 647px reais — outro arquivo, outro
      teto. As duas nunca aparecem juntas. */

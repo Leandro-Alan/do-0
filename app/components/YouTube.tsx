@@ -2,7 +2,7 @@ import Chapter from "./Chapter";
 import Cta from "./Cta";
 import TelaYouTube from "./TelaYouTube";
 import TvLiga from "./TvLiga";
-import { chapters, ou } from "@/lib/chapters";
+import { capitulo, ou } from "@/lib/chapters";
 import { ultimosVideos } from "@/lib/youtube";
 
 /**
@@ -23,7 +23,7 @@ import { ultimosVideos } from "@/lib/youtube";
  * capitulo) e no desktop sai do fluxo pra direita.
  */
 export default async function YouTube() {
-  const cap = chapters[5];
+  const cap = capitulo("youtube");
   const conteudo = cap.conteudo;
   if (!conteudo) return null;
 

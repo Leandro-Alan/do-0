@@ -4,7 +4,7 @@ import Cta from "./Cta";
 import FaixaFotos from "./FaixaFotos";
 import ListrasFortix from "./ListrasFortix";
 import Proof from "./Proof";
-import { chapters, ou } from "@/lib/chapters";
+import { capitulo, ou } from "@/lib/chapters";
 
 /**
  * Capitulo 02. Campo claro de concreto, grafite e as tres listras do logo.
@@ -15,7 +15,7 @@ import { chapters, ou } from "@/lib/chapters";
  * no slot `assinatura`, no pe — hoje vazia, porque nao existe foto da Fortix.
  */
 export default function Fortix() {
-  const cap = chapters[2];
+  const cap = capitulo("fortix");
   const conteudo = cap.conteudo;
   if (!conteudo) return null;
 

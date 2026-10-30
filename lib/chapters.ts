@@ -59,8 +59,12 @@ export type Conteudo = {
   lema?: string;
   /** assuntos que ele palestra. Viram cartoes pequenos. So o 04 usa. */
   temas?: string[];
-  /** citacao de destaque COM a fonte. Sem fonte, nao renderiza. So o 04 usa. */
-  citacao?: { texto: string; fonte: string };
+  /**
+   * Citacao de destaque. Sem `texto`, nao renderiza. `fonte` e opcional: com
+   * ela, vira linha de atribuicao embaixo (citacao de terceiro); sem ela, e
+   * so a frase grande em italico (afirmacao do proprio Andre). So o 04 usa.
+   */
+  citacao?: { texto: string; fonte?: string };
   /**
    * Mini-briefing que monta a mensagem do WhatsApp. So aparece se o link do
    * CTA for wa.me — em qualquer outro destino nao ha mensagem pra montar, e o
@@ -187,6 +191,12 @@ export type Capitulo = {
   paleta: Paleta;
   /** cor da barra do navegador enquanto o capitulo esta ativo. */
   themeColor: string;
+  /**
+   * Cor da bolinha do capitulo no indice do hero e no rodape. Ausente = o bg
+   * do capitulo. Existe porque o Andre pediu, em 30/10, a Fortix dourada e o
+   * Barbers Vale num verde mais claro que o breu do fundo.
+   */
+  amostra?: string;
   /** links crus, como o Leandro preencheu. Vazio = usar ou(). */
   links: Record<string, string>;
   /** so entra aqui o que for verdade. Campo ausente = elemento nao renderiza. */
@@ -263,7 +273,9 @@ const CHANNEL_ID_YOUTUBE = "UCdtJQBrJ40GZ7BLLq5RMOfg";
  * E por isso este capitulo tem UM CTA so. O secundario seria "Conhecer a
  * barbearia" com o mesmo destino, e dois botoes pro mesmo lugar e ruido.
  */
-const SITE_SANTOVISU = "https://barbearia-site-mu.vercel.app/";
+// Dominio proprio desde 29/10/2026 (HostGator deles). O demo antigo da
+// Vercel saiu daqui.
+const SITE_SANTOVISU = "https://santovisubarbearia.com.br/";
 
 /**
  * O link do canal que ja abre a caixa "Inscrever-se".
@@ -279,13 +291,18 @@ const comInscricao = (canal: string) => {
   return `${limpo}${limpo.includes("?") ? "&" : "?"}sub_confirmation=1`;
 };
 
+// Ordem pedida pelo Andre em 30/10: Choque, Fortix, Santo Visu, Barbers Vale,
+// Palestras, YouTube. Os componentes acham o capitulo por id (porId), nunca
+// pela posicao, entao reordenar e so mexer aqui e no page.tsx.
 export const chapters: Capitulo[] = [
   {
     id: "hero",
     numero: "00",
     // o hero nao mostra numero, so a categoria — entao ela nao pode repetir o nome
     categoria: "Jacareí · SP",
-    nome: "André Alves",
+    // Pedido do Andre em 30/10: a capa leva o nome publico, "André Santo
+    // Visu", e o nome de registro desce pra linha dourada de baixo.
+    nome: "André Santo Visu",
     tituloWdth: 112,
     paleta: {
       bg: "#0D0C0A",
@@ -300,135 +317,23 @@ export const chapters: Capitulo[] = [
       instagram: "https://instagram.com/andresantovisu",
     },
     conteudo: {
-      assinatura: "André Santo Visu",
-      subtitulo:
-        "Eventos, mentoria, consultoria e conteúdos que irão alavancar sua carreira e empresa.",
-      // A melhor foto que existe do Andre. Nao ha recorte sem fundo do material
-      // dele, entao o hero usa a foto inteira com degrade forte pro breu e
-      // duotone quente — o caminho alternativo previsto no CLAUDE.md.
+      assinatura: "André Alves",
+      // texto do proprio Andre (30/10), no lugar do descritivo antigo
+      subtitulo: "Conheça o meu ecossistema. Clique e faça parte dos nossos projetos.",
+      // Escolhida pelo Andre em 30/10: retrato de estudio, camisa amarela,
+      // fundo preto. Retrato em pe casa com a coluna do desktop; no celular o
+      // recorte sobe pro rosto (object-position em .hero-foto).
       foto: {
-        src: "/fotos/andre-4.webp",
-        alt: "André Alves falando ao microfone num palco.",
-        largura: 1800,
-        altura: 1202,
-      },
-    },
-  },
-  {
-    id: "barbersvale",
-    numero: "01",
-    categoria: "Evento",
-    nome: "Barbers Vale",
-    // o mais condensado do site: o titulo do evento e enorme e precisa caber
-    tituloWdth: 68,
-    paleta: {
-      bg: "#04140C",
-      fg: "#EAF7EF",
-      muted: "#93AE9F",
-      accent: "#19E08C",
-      accentFg: "#04140C",
-      duo: { escuro: "#04140C", claro: "#19E08C" },
-    },
-    themeColor: "#04140C",
-    links: {
-      // A LP propria do evento. O capitulo e teaser: leva pra la, nao repete.
-      lp: LP_BARBERSVALE,
-      instagram: IG_BARBERSVALE,
-    },
-    // Tudo lido no flyer oficial (public/fotos/flyer-barbersvale-2026.webp).
-    // A hora da abertura (08:00) veio do prompt do Leandro, nao do flyer —
-    // confirmar com o Andre antes de mandar. Ver TODO.md.
-    evento: {
-      nome: "Barbers Vale",
-      data: "2026-10-26",
-      rotulo: "26 de outubro",
-      edicao: "A EVOLUÇÃO",
-      local: "Teatro Ariano Suassuna",
-      cidade: "Jacareí-SP",
-      inicio: "2026-10-26T08:00:00-03:00",
-    },
-    conteudo: {
-      titulo: "BARBERS VALE 2K26",
-      subtitulo: "O maior evento para barbeiros do Vale do Paraíba.",
-      foto: {
-        src: "/fotos/andre-auditorio.webp",
-        alt: "André Alves no palco do teatro, com a plateia vazia atrás.",
-        largura: 763,
-        altura: 767,
-      },
-      ctaPrincipal: {
-        rotulo: "Garantir meu ingresso",
-        href: LP_BARBERSVALE,
-        rotuloDepois: "Conhecer o Barbers Vale",
-      },
-      ctaSecundario: {
-        rotulo: "Ver o evento no Instagram",
-        href: IG_BARBERSVALE,
-      },
-    },
-  },
-  {
-    id: "fortix",
-    numero: "02",
-    categoria: "Mentoria",
-    nome: "Fortix",
-    // o mais expandido do site. O titulo e uma palavra curta em caixa alta com
-    // tracking aberto: sem largura ele nao enche a linha e o capitulo esvazia
-    tituloWdth: 122,
-    paleta: {
-      bg: "#E3E3E0",
-      fg: "#111214",
-      muted: "#56585B",
-      accent: "#2A2C31",
-      accentFg: "#E3E3E0",
-      duo: { escuro: "#111214", claro: "#E3E3E0" },
-    },
-    themeColor: "#E3E3E0",
-    links: {
-      whatsapp: WHATSAPP_COMERCIAL,
-      instagram: "https://instagram.com/fortixclub",
-    },
-    conteudo: {
-      titulo: "FORTIX",
-      assinatura: "Clube de mentoria para donos de barbearia",
-      subtitulo: "Onde donos fortes e corajosos estão.",
-      texto:
-        "Mentoria exclusiva para donos de barbearia que querem escalar com acompanhamento, estrutura e em comunidade.",
-      // unico arquivo que existe da Fortix. 150x150 e com fundo escuro proprio,
-      // entao so aparece pequeno e dentro de uma pastilha grafite — ver CLAUDE.md
-      marca: {
-        src: "/marca/fortix.webp",
-        alt: "Logo da Fortix.",
-        largura: 150,
-        altura: 150,
-      },
-      // NAO EXISTE NENHUMA FOTO DA FORTIX. Enquanto este array estiver vazio a
-      // faixa nao renderiza — nada de moldura cinza esperando foto. Assim que o
-      // Andre mandar, e so preencher aqui: com 1 ou 2 vira uma foto grande, com
-      // 3 ou mais vira a faixa arrastavel. Ver TODO.md.
-      fotos: [],
-      provas: [
-        {
-          prefixo: "Quase R$ ",
-          valor: 2,
-          sufixo: " mi",
-          rotulo: "faturados com a Santo Visu no último ano",
-        },
-        { prefixo: "+", valor: 20, rotulo: "barbearias mentoradas" },
-      ],
-      ctaPrincipal: {
-        rotulo: "Quero ser FORTIX",
-        href: WHATSAPP_COMERCIAL,
-      },
-      ctaSecundario: {
-        rotulo: "Ver o clube no Instagram",
-        href: "https://instagram.com/fortixclub",
+        src: "/fotos/andre-principal.webp",
+        alt: "André Alves sorrindo, de camisa polo amarela, num fundo escuro.",
+        largura: 1068,
+        altura: 1600,
       },
     },
   },
   {
     id: "choque",
-    numero: "03",
+    numero: "01",
     categoria: "Certificação",
     nome: "Choque de Gestão",
     // largura NORMAL: e o unico capitulo que nao mexe no eixo wdth. O peso
@@ -472,110 +377,69 @@ export const chapters: Capitulo[] = [
     },
   },
   {
-    id: "palestras",
-    numero: "04",
-    categoria: "Palestras",
-    nome: "Cursos e Palestras",
-    // largura normal, como o 03. Os dois se separam pelo PESO: o 03 e 900
-    // institucional, este e 500 editorial. Ver "Tipografia" no CLAUDE.md.
-    tituloWdth: 100,
+    id: "fortix",
+    numero: "02",
+    categoria: "Mentoria",
+    // nome pedido pelo Andre em 30/10 (era so "Fortix")
+    nome: "Mentoria Fortix Club",
+    // o mais expandido do site. O titulo e uma palavra curta em caixa alta com
+    // tracking aberto: sem largura ele nao enche a linha e o capitulo esvazia
+    tituloWdth: 122,
     paleta: {
-      bg: "#EEE4D4",
-      fg: "#2E1C13",
-      muted: "#6E5445",
-      accent: "#6B3A22",
-      accentFg: "#EEE4D4",
-      duo: { escuro: "#2E1C13", claro: "#EEE4D4" },
+      bg: "#E3E3E0",
+      fg: "#111214",
+      muted: "#56585B",
+      accent: "#2A2C31",
+      accentFg: "#E3E3E0",
+      duo: { escuro: "#111214", claro: "#E3E3E0" },
     },
-    themeColor: "#EEE4D4",
+    themeColor: "#E3E3E0",
+    amostra: "#D9A928",
     links: {
-      contato: WHATSAPP_COMERCIAL,
+      whatsapp: WHATSAPP_COMERCIAL,
+      instagram: "https://instagram.com/fortixclub",
     },
     conteudo: {
-      // caixa baixa no "palestras", diferente do `nome`: aqui o titulo e
-      // frase de revista, nao rotulo de indice
-      titulo: "Cursos e palestras",
-      subtitulo: "Me chame para palestrar no seu evento.",
-      temas: ["Gestão de barbearia", "Cultura organizacional", "Liderança e equipe"],
-      // NAO ha numero nenhum do Andre neste capitulo, de proposito: nao existe
-      // dado confirmado sobre palestras dele. O 3x abaixo e afirmacao da HBR,
-      // nao resultado dele — e por isso vem com a fonte colada.
-      citacao: {
-        texto: "Empresas com culturas fortes têm desempenho financeiro até 3x maior.",
-        fonte: "Harvard Business Review",
+      titulo: "FORTIX",
+      assinatura: "Clube de mentoria para donos de barbearia",
+      subtitulo: "Onde donos fortes e corajosos estão.",
+      texto:
+        "Mentoria exclusiva para donos de barbearia que querem escalar com acompanhamento, estrutura e em comunidade.",
+      // unico arquivo que existe da Fortix. 150x150 e com fundo escuro proprio,
+      // entao so aparece pequeno e dentro de uma pastilha grafite — ver CLAUDE.md
+      marca: {
+        src: "/marca/fortix.webp",
+        alt: "Logo da Fortix.",
+        largura: 150,
+        altura: 150,
       },
-      // Recorte 4:3 de andre-2.webp, gerado por scripts/recorte-salao.mjs: sem
-      // a seta do carrossel do Instagram e ja na proporcao da tela de projetor.
-      foto: {
-        src: "/fotos/andre-salao.webp",
-        alt: "André Alves em pé num salão de eventos montado, com o telão ao fundo.",
-        largura: 604,
-        altura: 453,
-      },
+      // NAO EXISTE NENHUMA FOTO DA FORTIX. Enquanto este array estiver vazio a
+      // faixa nao renderiza — nada de moldura cinza esperando foto. Assim que o
+      // Andre mandar, e so preencher aqui: com 1 ou 2 vira uma foto grande, com
+      // 3 ou mais vira a faixa arrastavel. Ver TODO.md.
+      fotos: [],
+      provas: [
+        {
+          prefixo: "Quase R$ ",
+          valor: 2,
+          sufixo: " mi",
+          rotulo: "faturados com a Santo Visu no último ano",
+        },
+        { prefixo: "+", valor: 20, rotulo: "barbearias mentoradas" },
+      ],
       ctaPrincipal: {
-        rotulo: "Solicitar proposta",
+        rotulo: "Quero ser FORTIX",
         href: WHATSAPP_COMERCIAL,
       },
-      briefing: {
-        saudacao: "Olá, quero convidar o André para palestrar.",
-        campos: [
-          {
-            rotulo: "Tipo de evento",
-            naMensagem: "Evento",
-            dica: "Feira, curso…",
-          },
-          { rotulo: "Cidade", naMensagem: "Cidade", dica: "Onde vai ser" },
-          { rotulo: "Data aproximada", naMensagem: "Data", dica: "Mês e ano" },
-          { rotulo: "Público estimado", naMensagem: "Público", dica: "Quantas pessoas" },
-        ],
-      },
-    },
-  },
-  {
-    id: "youtube",
-    numero: "05",
-    categoria: "Conteúdo",
-    nome: "YouTube",
-    tituloWdth: 118,
-    paleta: {
-      bg: "#0E0E0E",
-      fg: "#F5F5F5",
-      muted: "#9B9B9B",
-      accent: "#FF1F3D",
-      // branco sobre esse vermelho da 3,81:1 (reprova AA). O breu da 5,07:1.
-      accentFg: "#0E0E0E",
-      // O vermelho e a LUZ do duotone, nao a sombra: e a tinta do capitulo, e
-      // o prompt pediu a foto em vermelho. A forca fica baixa no componente
-      // (0.46) justamente porque aqui o acento e saturadissimo — ver CLAUDE.md.
-      duo: { escuro: "#0E0E0E", claro: "#FF1F3D" },
-    },
-    themeColor: "#0E0E0E",
-    links: {
-      canal: CANAL_YOUTUBE,
-      channelId: CHANNEL_ID_YOUTUBE,
-    },
-    conteudo: {
-      titulo: "No YouTube",
-      subtitulo: "Gestão de barbearia, sem filtro.",
-      // A reserva do capitulo: entra SO quando nao ha video pra mostrar (sem
-      // channelId, ou feed fora do ar). E a unica foto do acervo em que ele
-      // aparece explicando alguma coisa dentro de uma barbearia — que e
-      // exatamente o assunto do canal. As de palco ja sao o hero e o 01.
-      foto: {
-        src: "/fotos/andre-1.webp",
-        alt: "André Alves explicando algo dentro de uma barbearia.",
-        largura: 647,
-        altura: 857,
-      },
-      ctaPrincipal: {
-        rotulo: "Inscrever-se no canal",
-        href: comInscricao(CANAL_YOUTUBE),
+      ctaSecundario: {
+        rotulo: "Ver o clube no Instagram",
+        href: "https://instagram.com/fortixclub",
       },
     },
   },
   {
     id: "barbearia",
-    numero: "06",
+    numero: "03",
     categoria: "Barbearia",
     nome: "Santo Visu",
     tituloWdth: 95,
@@ -632,9 +496,170 @@ export const chapters: Capitulo[] = [
       },
     },
   },
+  {
+    id: "barbersvale",
+    numero: "04",
+    categoria: "Evento",
+    nome: "Barbers Vale",
+    // o mais condensado do site: o titulo do evento e enorme e precisa caber
+    tituloWdth: 68,
+    paleta: {
+      bg: "#04140C",
+      fg: "#EAF7EF",
+      muted: "#93AE9F",
+      accent: "#19E08C",
+      accentFg: "#04140C",
+      duo: { escuro: "#04140C", claro: "#19E08C" },
+    },
+    themeColor: "#04140C",
+    amostra: "#19E08C",
+    links: {
+      // A LP propria do evento. O capitulo e teaser: leva pra la, nao repete.
+      lp: LP_BARBERSVALE,
+      instagram: IG_BARBERSVALE,
+    },
+    // Tudo lido no flyer oficial (public/fotos/flyer-barbersvale-2026.webp).
+    // A hora da abertura (08:00) veio do prompt do Leandro, nao do flyer —
+    // confirmar com o Andre antes de mandar. Ver TODO.md.
+    evento: {
+      nome: "Barbers Vale",
+      data: "2026-10-26",
+      rotulo: "26 de outubro",
+      edicao: "A EVOLUÇÃO",
+      local: "Teatro Ariano Suassuna",
+      cidade: "Jacareí-SP",
+      inicio: "2026-10-26T08:00:00-03:00",
+    },
+    conteudo: {
+      titulo: "BARBERS VALE 2K26",
+      subtitulo: "O maior evento para barbeiros do Vale do Paraíba.",
+      foto: {
+        src: "/fotos/andre-auditorio.webp",
+        alt: "André Alves no palco do teatro, com a plateia vazia atrás.",
+        largura: 763,
+        altura: 767,
+      },
+      ctaPrincipal: {
+        rotulo: "Garantir meu ingresso",
+        href: LP_BARBERSVALE,
+        rotuloDepois: "Conhecer o Barbers Vale",
+      },
+      ctaSecundario: {
+        rotulo: "Ver o evento no Instagram",
+        href: IG_BARBERSVALE,
+      },
+    },
+  },
+  {
+    id: "palestras",
+    numero: "05",
+    categoria: "Palestras",
+    nome: "Cursos e Palestras",
+    // largura normal, como o 03. Os dois se separam pelo PESO: o 03 e 900
+    // institucional, este e 500 editorial. Ver "Tipografia" no CLAUDE.md.
+    tituloWdth: 100,
+    paleta: {
+      bg: "#EEE4D4",
+      fg: "#2E1C13",
+      muted: "#6E5445",
+      accent: "#6B3A22",
+      accentFg: "#EEE4D4",
+      duo: { escuro: "#2E1C13", claro: "#EEE4D4" },
+    },
+    themeColor: "#EEE4D4",
+    links: {
+      contato: WHATSAPP_COMERCIAL,
+    },
+    conteudo: {
+      // caixa baixa no "palestras", diferente do `nome`: aqui o titulo e
+      // frase de revista, nao rotulo de indice
+      titulo: "Cursos e palestras",
+      temas: ["Gestão de barbearia", "Cultura organizacional", "Liderança e equipe"],
+      // Frase do proprio Andre, mandada por ele em 30/10 pra ir embaixo da foto.
+      citacao: {
+        texto:
+          "Eu acredito que o crescimento e a mudança da barbearia se dá pelo conhecimento e pela educação.",
+        fonte: "André Santo Visu",
+      },
+      // Mandada pelo Andre em 30/10 (IMG_6553, 4000x2664). Recorte 4:3 nele,
+      // sem o texto do telao, a 1200x900. Original em assets-originais/fotos.
+      foto: {
+        src: "/fotos/andre-palco-microfone.webp",
+        alt: "André Alves de microfone na mão, palestrando num palco.",
+        largura: 1200,
+        altura: 900,
+      },
+      ctaPrincipal: {
+        rotulo: "Solicitar proposta",
+        href: WHATSAPP_COMERCIAL,
+      },
+      briefing: {
+        saudacao: "Olá, quero convidar o André para palestrar.",
+        campos: [
+          {
+            rotulo: "Tipo de evento",
+            naMensagem: "Evento",
+            dica: "Feira, curso…",
+          },
+          { rotulo: "Cidade", naMensagem: "Cidade", dica: "Onde vai ser" },
+          { rotulo: "Data aproximada", naMensagem: "Data", dica: "Mês e ano" },
+          { rotulo: "Público estimado", naMensagem: "Público", dica: "Quantas pessoas" },
+        ],
+      },
+    },
+  },
+  {
+    id: "youtube",
+    numero: "06",
+    categoria: "Conteúdo",
+    nome: "YouTube",
+    tituloWdth: 118,
+    paleta: {
+      bg: "#0E0E0E",
+      fg: "#F5F5F5",
+      muted: "#9B9B9B",
+      accent: "#FF1F3D",
+      // branco sobre esse vermelho da 3,81:1 (reprova AA). O breu da 5,07:1.
+      accentFg: "#0E0E0E",
+      // O vermelho e a LUZ do duotone, nao a sombra: e a tinta do capitulo, e
+      // o prompt pediu a foto em vermelho. A forca fica baixa no componente
+      // (0.46) justamente porque aqui o acento e saturadissimo — ver CLAUDE.md.
+      duo: { escuro: "#0E0E0E", claro: "#FF1F3D" },
+    },
+    themeColor: "#0E0E0E",
+    links: {
+      canal: CANAL_YOUTUBE,
+      channelId: CHANNEL_ID_YOUTUBE,
+    },
+    conteudo: {
+      titulo: "No YouTube",
+      subtitulo: "Gestão de barbearia, sem filtro.",
+      // A reserva do capitulo: entra SO quando nao ha video pra mostrar (sem
+      // channelId, ou feed fora do ar). E a unica foto do acervo em que ele
+      // aparece explicando alguma coisa dentro de uma barbearia — que e
+      // exatamente o assunto do canal. As de palco ja sao o hero e o 01.
+      foto: {
+        src: "/fotos/andre-1.webp",
+        alt: "André Alves explicando algo dentro de uma barbearia.",
+        largura: 647,
+        altura: 857,
+      },
+      ctaPrincipal: {
+        rotulo: "Inscrever-se no canal",
+        href: comInscricao(CANAL_YOUTUBE),
+      },
+    },
+  },
 ];
 
 /** Total que aparece na etiqueta: "01 / 06". O hero (00) nao conta. */
 export const TOTAL = chapters.filter((c) => c.numero !== "00").length;
 
 export const porId = (id: string) => chapters.find((c) => c.id === id);
+
+/** O capitulo pelo id, garantido. Id errado quebra o build, nunca a tela. */
+export const capitulo = (id: string): Capitulo => {
+  const c = porId(id);
+  if (!c) throw new Error(`capitulo inexistente: ${id}`);
+  return c;
+};

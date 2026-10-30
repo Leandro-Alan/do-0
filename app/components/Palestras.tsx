@@ -2,7 +2,7 @@ import Chapter from "./Chapter";
 import Citacao from "./Citacao";
 import ConviteParaPalestrar from "./ConviteParaPalestrar";
 import TelaProjetor from "./TelaProjetor";
-import { chapters, ou } from "@/lib/chapters";
+import { capitulo, ou } from "@/lib/chapters";
 
 /**
  * Capitulo 04. O Andre como palestrante, falando com quem CONTRATA:
@@ -25,11 +25,12 @@ import { chapters, ou } from "@/lib/chapters";
  *   dele nao muda nada.
  *
  * Sem `<Proof>` de proposito: nao existe UM numero confirmado sobre as
- * palestras do Andre. O unico numero da tela e o "3x" da citacao, que e
- * afirmacao da Harvard Business Review e vem com a fonte colada embaixo.
+ * palestras do Andre. Os numeros que aparecem na citacao sao o historico
+ * dele (tempo de barbearia, faturamento, donos formados) — ja usados em
+ * Fortix e Choque —, nao resultado de palestra.
  */
 export default function Palestras() {
-  const cap = chapters[4];
+  const cap = capitulo("palestras");
   const conteudo = cap.conteudo;
   if (!conteudo) return null;
 
@@ -54,9 +55,7 @@ export default function Palestras() {
 
           <TelaProjetor foto={foto} />
 
-          {citacao?.texto && citacao.fonte && (
-            <Citacao texto={citacao.texto} fonte={citacao.fonte} />
-          )}
+          {citacao?.texto && <Citacao texto={citacao.texto} fonte={citacao.fonte} />}
         </div>
       }
       ctaPrincipal={

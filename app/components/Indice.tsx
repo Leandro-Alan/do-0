@@ -39,6 +39,7 @@ export default function Indice({ destinos }: { destinos: Capitulo[] }) {
             {
               "--linha-bg": destino.paleta.bg,
               "--linha-fg": destino.paleta.fg,
+              "--linha-cor": destino.amostra ?? destino.paleta.bg,
             } as CSSProperties
           }
         >
