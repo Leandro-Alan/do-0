@@ -32,7 +32,15 @@ const MEIO = "link_bio";
  *   ninguém. Risco não-nulo, retorno nulo. Quando os links de verdade
  *   estiverem preenchidos, isto deixa de importar sozinho.
  */
-const SEM_UTM = [/(^|\.)wa\.me$/i, /(^|\.)api\.whatsapp\.com$/i, /(^|\.)ig\.me$/i];
+// Site da Santo Visu: pedido do Leandro em 30/10, link limpo. O site deles e
+// estatico na HostGator, sem analytics pra ler a UTM; o clique continua contado
+// aqui pelo `track`.
+const SEM_UTM = [
+  /(^|\.)wa\.me$/i,
+  /(^|\.)api\.whatsapp\.com$/i,
+  /(^|\.)ig\.me$/i,
+  /(^|\.)santovisubarbearia\.com\.br$/i,
+];
 
 /**
  * Carimba `utm_source`, `utm_medium` e `utm_campaign` no link.
