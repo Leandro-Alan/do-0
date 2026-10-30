@@ -25,8 +25,7 @@ quando chegar**.
 | o quê | estado |
 |---|---|
 | Links | ✅ Completo. LP própria (`lp.barbersvale.com.br`) e Instagram do evento. |
-| **Confirmar: hora de abertura** | A contagem regressiva mira **26/10/2026 às 08:00**. Essa hora veio do teu prompt, **não do flyer** — o flyer só traz a data. Se o evento abrir em outro horário, a contagem vira "É hoje." na hora errada. |
-| **Confirmar: edição e local** | "A EVOLUÇÃO" e "Teatro Ariano Suassuna" foram lidos no flyer oficial, não confirmados com o André. |
+| **Edição 2K27 (30/10)** | "A ASCENSÃO", 18 e 19/10/2027, lida na bio do Instagram do evento. **Falta:** local, cidade, hora de abertura (a contagem mira a meia-noite do dia 18) e a cor nova da edição, que o Leandro vai ver com o André. |
 | Foto a trocar | `andre-auditorio.webp` (763×767) é print de Instagram e limita o tamanho de exibição. Uma foto boa do palco cheio melhoraria o capítulo. |
 | Foto travada | `auditorio-barbersvale.webp` tem **ícone de perfil do Instagram** no canto inferior esquerdo. Precisa de recorte antes de entrar — hoje não é usada. |
 

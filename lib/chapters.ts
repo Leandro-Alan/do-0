@@ -148,6 +148,11 @@ export type Evento = {
    * regressiva. Sem isso a contagem cai na virada do dia.
    */
   inicio?: string;
+  /**
+   * Ultimo dia, ISO, quando o evento dura mais de um. Ausente = so `data`.
+   * O "É hoje." vale ate o fim deste dia.
+   */
+  fim?: string;
 };
 
 /** "antes" = ainda vai rolar · "hoje" = e hoje · "passou" = acabou */
@@ -166,7 +171,7 @@ export type FaseEvento = "antes" | "hoje" | "passou";
 export const faseEvento = (evento?: Evento, agora: Date = new Date()): FaseEvento => {
   if (!evento) return "passou";
   const abertura = new Date(evento.inicio ?? `${evento.data}T00:00:00-03:00`).getTime();
-  const fimDoDia = new Date(`${evento.data}T23:59:59-03:00`).getTime();
+  const fimDoDia = new Date(`${evento.fim ?? evento.data}T23:59:59-03:00`).getTime();
   const t = agora.getTime();
   if (t < abertura) return "antes";
   if (t <= fimDoDia) return "hoje";
@@ -518,20 +523,20 @@ export const chapters: Capitulo[] = [
       lp: LP_BARBERSVALE,
       instagram: IG_BARBERSVALE,
     },
-    // Tudo lido no flyer oficial (public/fotos/flyer-barbersvale-2026.webp).
-    // A hora da abertura (08:00) veio do prompt do Leandro, nao do flyer —
-    // confirmar com o Andre antes de mandar. Ver TODO.md.
+    // 2K27, lido na bio do Instagram do evento em 30/10/2026: "18 e 19 de
+    // outubro | BARBERS VALE 2K27". A edicao e "A ascensão", como o Andre
+    // escreveu (a arte do post grafa "ASCENÇÃO"). Local, cidade e hora de
+    // abertura ainda NAO foram divulgados: ficam de fora, e a contagem mira a
+    // meia-noite do dia 18. Ver TODO.md.
     evento: {
       nome: "Barbers Vale",
-      data: "2026-10-26",
-      rotulo: "26 de outubro",
-      edicao: "A EVOLUÇÃO",
-      local: "Teatro Ariano Suassuna",
-      cidade: "Jacareí-SP",
-      inicio: "2026-10-26T08:00:00-03:00",
+      data: "2027-10-18",
+      fim: "2027-10-19",
+      rotulo: "18 e 19 de outubro",
+      edicao: "A ASCENSÃO",
     },
     conteudo: {
-      titulo: "BARBERS VALE 2K26",
+      titulo: "BARBERS VALE 2K27",
       subtitulo: "O maior evento para barbeiros do Vale do Paraíba.",
       foto: {
         src: "/fotos/andre-auditorio.webp",
